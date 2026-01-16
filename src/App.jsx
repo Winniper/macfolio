@@ -1,4 +1,4 @@
-import { Navbar, Welcome } from "@components"
+import { Navbar, Welcome, Dock } from "@components"
 import { Analytics } from "@vercel/analytics/react"
 
 function App() {
@@ -7,6 +7,7 @@ function App() {
     <main>
       <Navbar />
       <Welcome />
+      <Dock />
       <Analytics />
     </main>
   )
