@@ -4,58 +4,57 @@ import {
     Cloud,
     Download,
     FileText,
-    Folder,
     HardDrive,
     Home,
     Monitor,
-    Image as ImageIcon,
-    Music,
-    Video
+    ChevronLeft,
+    ChevronRight,
 } from 'lucide-react';
 
 import WindowWrapper from '../hoc/WindowWrapper';
 import WindowControls from '../components/WindowControl';
 
-const finderItems = [
+// Project data with links
+const projects = [
     {
-        id: 1,
-        title: 'Projects',
-        type: 'folder',
-        icon: Folder,
-        color: 'text-blue-500',
+        id: 'project-1',
+        title: 'CarRent',
+        github: 'https://github.com/DebadityaBarman/car-rent',
+        website: 'https://car-rent-demo.vercel.app',
     },
     {
-        id: 2,
-        title: 'Resume.pdf',
-        type: 'file',
-        icon: FileText,
-        color: 'text-red-500',
+        id: 'project-2',
+        title: 'TripGuide',
+        github: 'https://github.com/DebadityaBarman/trip-guide',
+        website: 'https://trip-guide-demo.vercel.app',
     },
     {
-        id: 3,
-        title: 'Profile.png',
-        type: 'image',
-        icon: ImageIcon,
-        color: 'text-purple-500',
-    },
-    {
-        id: 4,
-        title: 'Music',
-        type: 'folder',
-        icon: Music,
-        color: 'text-green-500',
-    },
-    {
-        id: 5,
-        title: 'Movies',
-        type: 'folder',
-        icon: Video,
-        color: 'text-pink-500',
+        id: 'project-3',
+        title: 'Evently',
+        github: 'https://github.com/DebadityaBarman/evently',
+        website: 'https://evently-demo.vercel.app',
     },
 ];
 
-const SidebarItem = ({ icon: Icon, label, active = false }) => (
+// Desktop level items
+const desktopItems = [
+    {
+        id: 'projects-folder',
+        title: 'Projects',
+        type: 'folder',
+        image: '/images/folder.png',
+    },
+    {
+        id: 'resume-file',
+        title: 'Resume.pdf',
+        type: 'file',
+        image: '/images/pdf.png',
+    },
+];
+
+const SidebarItem = ({ icon: Icon, label, active = false, onClick }) => (
     <div
+        onClick={onClick}
         className={`flex w-full items-center gap-2 rounded px-2 py-1 text-xs font-medium cursor-pointer ${active ? 'bg-blue-600/30 text-blue-300' : 'text-gray-400 hover:bg-[#333333]'
             }`}
     >
@@ -66,15 +65,95 @@ const SidebarItem = ({ icon: Icon, label, active = false }) => (
 
 const Finder = () => {
     const [selectedItem, setSelectedItem] = useState(null);
+    const [currentPath, setCurrentPath] = useState(['Desktop']);
+    const [currentFolder, setCurrentFolder] = useState(null);
+
+    // Get current items based on folder level
+    const getCurrentItems = () => {
+        if (currentFolder === null) {
+            return desktopItems;
+        } else if (currentFolder === 'projects') {
+            return projects.map(p => ({
+                id: p.id,
+                title: p.title,
+                type: 'folder',
+                image: '/images/folder.png',
+            }));
+        } else {
+            const project = projects.find(p => p.id === currentFolder);
+            if (!project) return [];
+            return [
+                {
+                    id: 'github',
+                    title: 'Github.pages',
+                    type: 'link',
+                    image: '/images/plain.png',
+                    url: project.github,
+                },
+                {
+                    id: 'website',
+                    title: 'Website.pages',
+                    type: 'link',
+                    image: '/images/plain.png',
+                    url: project.website,
+                },
+            ];
+        }
+    };
+
+    const handleItemClick = (item) => {
+        setSelectedItem(item.id);
+    };
+
+    const handleItemDoubleClick = (item) => {
+        if (item.type === 'folder') {
+            if (item.id === 'projects-folder') {
+                setCurrentFolder('projects');
+                setCurrentPath(['Desktop', 'Projects']);
+            } else if (projects.find(p => p.id === item.id)) {
+                setCurrentFolder(item.id);
+                setCurrentPath(['Desktop', 'Projects', item.title]);
+            }
+            setSelectedItem(null);
+        } else if (item.type === 'link' && item.url) {
+            window.open(item.url, '_blank', 'noopener,noreferrer');
+        }
+    };
+
+    const goBack = () => {
+        if (currentFolder === null) return;
+
+        if (currentFolder === 'projects') {
+            setCurrentFolder(null);
+            setCurrentPath(['Desktop']);
+        } else if (projects.find(p => p.id === currentFolder)) {
+            setCurrentFolder('projects');
+            setCurrentPath(['Desktop', 'Projects']);
+        }
+        setSelectedItem(null);
+    };
+
+    const canGoBack = currentFolder !== null;
+    const currentItems = getCurrentItems();
 
     return (
         <>
             <div id="window-header">
                 <WindowControls target="finder" />
                 <div className="flex items-center gap-2">
-                    <span className="text-gray-500 cursor-default">&lt;</span>
-                    <span className="text-gray-500 cursor-default">&gt;</span>
-                    <span className="font-semibold text-gray-300 ml-2">Desktop</span>
+                    <button
+                        onClick={goBack}
+                        disabled={!canGoBack}
+                        className={`${canGoBack ? 'text-gray-300 hover:text-white cursor-pointer' : 'text-gray-600 cursor-default'}`}
+                    >
+                        <ChevronLeft size={16} />
+                    </button>
+                    <span className="text-gray-600 cursor-default">
+                        <ChevronRight size={16} />
+                    </span>
+                    <span className="font-semibold text-gray-300 ml-2">
+                        {currentPath[currentPath.length - 1]}
+                    </span>
                 </div>
                 <div></div>
             </div>
@@ -87,7 +166,16 @@ const Finder = () => {
                             <div className="space-y-0.5">
                                 <SidebarItem icon={Home} label="Recents" />
                                 <SidebarItem icon={AppWindow} label="Applications" />
-                                <SidebarItem icon={Monitor} label="Desktop" active />
+                                <SidebarItem
+                                    icon={Monitor}
+                                    label="Desktop"
+                                    active={currentFolder === null}
+                                    onClick={() => {
+                                        setCurrentFolder(null);
+                                        setCurrentPath(['Desktop']);
+                                        setSelectedItem(null);
+                                    }}
+                                />
                                 <SidebarItem icon={FileText} label="Documents" />
                                 <SidebarItem icon={Download} label="Downloads" />
                             </div>
@@ -111,20 +199,24 @@ const Finder = () => {
 
                 <div className="flex-1 bg-[#1e1e1e] p-4" onClick={() => setSelectedItem(null)}>
                     <div className="grid grid-cols-4 gap-4">
-                        {finderItems.map((item) => (
+                        {currentItems.map((item) => (
                             <div
                                 key={item.id}
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    setSelectedItem(item.id);
+                                    handleItemClick(item);
+                                }}
+                                onDoubleClick={(e) => {
+                                    e.stopPropagation();
+                                    handleItemDoubleClick(item);
                                 }}
                                 className={`flex flex-col items-center justify-center gap-1 rounded-lg p-3 transition-colors cursor-pointer ${selectedItem === item.id ? 'bg-blue-600/20 ring-1 ring-blue-500' : 'hover:bg-[#333333]'
                                     }`}
                             >
-                                <item.icon
-                                    size={42}
-                                    strokeWidth={1}
-                                    className={item.color || 'text-blue-500'}
+                                <img
+                                    src={item.image}
+                                    alt={item.title}
+                                    className="w-12 h-12 object-contain"
                                 />
                                 <span className={`text-xs text-center max-w-[80px] truncate ${selectedItem === item.id ? 'bg-blue-500 text-white rounded px-1' : 'text-gray-300'
                                     }`}>
