@@ -29,7 +29,7 @@ const Contact = () => {
     ];
 
     return (
-        <div className="flex flex-col rounded-xl overflow-hidden shadow-2xl bg-[#1e1e1e] w-[600px] h-[350px]">
+        <div className="flex flex-col rounded-xl overflow-hidden shadow-2xl bg-[#1e1e1e] w-[min(600px,90vw)] h-[min(350px,60vh)]">
             {/* Window Header */}
             <div className="flex items-center justify-between px-4 py-3 bg-[#2d2d2d] border-b border-[#1a1a1a]">
                 <WindowControls target="contact" />
