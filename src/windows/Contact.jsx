@@ -1,74 +1,78 @@
-import React, { useState } from 'react';
-import { Send, Paperclip, Smile } from 'lucide-react';
+import React from 'react';
+import { Github, Linkedin, Mail } from 'lucide-react';
 import WindowWrapper from '../hoc/WindowWrapper';
 import WindowControls from '../components/WindowControl';
 
 const Contact = () => {
-    const [subject, setSubject] = useState('');
-    const [message, setMessage] = useState('');
-
-    const handleSend = () => {
-        window.location.href = `mailto:your.email@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
-    };
+    const links = [
+        {
+            name: 'Github',
+            icon: Github,
+            color: 'bg-[#ef5350]', // Red
+            hover: 'hover:bg-[#d32f2f]',
+            link: 'https://github.com/DebadityaBarman' // Assuming this based on previous context or placeholder
+        },
+        {
+            name: 'LinkedIn',
+            icon: Linkedin,
+            color: 'bg-[#0077b5]', // LinkedIn Blue
+            hover: 'hover:bg-[#006097]',
+            link: 'https://linkedin.com/in/debadityabarman' // Placeholder
+        },
+        {
+            name: 'Gmail',
+            icon: Mail,
+            color: 'bg-[#43a047]', // Green (like the Platform card in reference) or Gmail Red
+            hover: 'hover:bg-[#2e7d32]',
+            link: 'mailto:your.email@gmail.com'
+        }
+    ];
 
     return (
-        <>
-            <div id="window-header">
+        <div className="flex flex-col rounded-xl overflow-hidden shadow-2xl bg-[#1e1e1e] w-[600px] h-[350px]">
+            {/* Window Header */}
+            <div className="flex items-center justify-between px-4 py-3 bg-[#2d2d2d] border-b border-[#1a1a1a]">
                 <WindowControls target="contact" />
-                <p>New Message</p>
-                <div></div>
+                <span className="text-[13px] font-medium text-gray-400">Contact Me</span>
+                <div className="w-[52px]"></div> {/* Spacer for alignment */}
             </div>
 
-            <div className="flex items-center gap-6 bg-[#252525] px-4 py-2 border-b border-[#1a1a1a] text-gray-400">
-                <button onClick={handleSend} className="hover:text-blue-400 transition-colors">
-                    <Send size={18} />
-                </button>
-                <button className="hover:text-blue-400 transition-colors">
-                    <Paperclip size={18} />
-                </button>
-                <button className="hover:text-blue-400 transition-colors">
-                    <Smile size={18} />
-                </button>
+            {/* Content Body */}
+            <div className="flex flex-col p-8 text-white h-full relative">
+
+                {/* Profile Section */}
+                <div className="mb-6">
+                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/10 mb-4 shadow-lg">
+                        <img
+                            src="https://github.com/shadcn.png"
+                            alt="Profile"
+                            className="w-full h-full object-cover"
+                        />
+                    </div>
+
+                    <h1 className="text-2xl font-bold mb-2">Let's Connect</h1>
+                    <p className="text-gray-400 text-sm max-w-md">
+                        Got an idea? A bug to squash? Or just wanna talk tech? I'm in.
+                    </p>
+                </div>
+
+                {/* Cards Grid */}
+                <div className="grid grid-cols-3 gap-4 mt-auto">
+                    {links.map((item) => (
+                        <a
+                            key={item.name}
+                            href={item.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`${item.color} ${item.hover} h-24 rounded-xl p-4 flex flex-col justify-between transition-all duration-300 hover:scale-[1.02] cursor-pointer shadow-lg`}
+                        >
+                            <item.icon size={24} className="text-white" />
+                            <span className="font-semibold text-sm">{item.name}</span>
+                        </a>
+                    ))}
+                </div>
             </div>
-
-            <div className="flex flex-col bg-[#1e1e1e] h-[300px]">
-                <div className="flex items-center border-b border-[#2a2a2a] p-2">
-                    <span className="w-16 text-gray-500 text-sm font-medium text-right pr-3">To:</span>
-                    <input
-                        type="text"
-                        value="your.email@gmail.com"
-                        readOnly
-                        className="flex-1 outline-none text-sm text-gray-300 bg-transparent"
-                    />
-                </div>
-
-                <div className="flex items-center border-b border-[#2a2a2a] p-2">
-                    <span className="w-16 text-gray-500 text-sm font-medium text-right pr-3">Cc:</span>
-                    <input
-                        type="text"
-                        className="flex-1 outline-none text-sm text-gray-300 bg-transparent"
-                    />
-                </div>
-
-                <div className="flex items-center border-b border-[#2a2a2a] p-2">
-                    <span className="w-16 text-gray-500 text-sm font-medium text-right pr-3">Subject:</span>
-                    <input
-                        type="text"
-                        value={subject}
-                        onChange={(e) => setSubject(e.target.value)}
-                        className="flex-1 outline-none text-sm text-gray-300 bg-transparent placeholder:text-gray-600"
-                        placeholder="Project Inquiry"
-                    />
-                </div>
-
-                <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    className="flex-1 resize-none p-4 outline-none text-sm text-gray-200 font-sans leading-relaxed bg-transparent placeholder:text-gray-600"
-                    placeholder="Type your message here..."
-                />
-            </div>
-        </>
+        </div>
     );
 };
 
