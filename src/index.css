@@ -163,11 +163,11 @@ body {
   }
 
   #terminal {
-    @apply absolute top-32 left-1/12;
+    @apply absolute top-24 left-[5%];
   }
 
   #contact {
-    @apply absolute top-60 left-5/12;
+    @apply absolute top-40 left-[35%];
   }
 
   #photos {
@@ -231,11 +231,11 @@ body {
   }
 
   #resume {
-    @apply absolute top-16 left-7/12;
+    @apply absolute top-16 left-[55%];
   }
 
   #finder {
-    @apply absolute left-40 top-20 shadow-2xl drop-shadow-2xl overflow-hidden rounded-xl;
+    @apply absolute left-[10%] top-20 shadow-2xl drop-shadow-2xl overflow-hidden rounded-xl max-w-[90vw];
 
     .sidebar {
       @apply w-48 bg-[#252525] border-r border-[#1a1a1a] flex flex-col p-5 space-y-3;
