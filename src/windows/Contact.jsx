@@ -10,21 +10,21 @@ const Contact = () => {
             icon: Github,
             color: 'bg-[#ef5350]', // Red
             hover: 'hover:bg-[#d32f2f]',
-            link: 'https://github.com/DebadityaBarman' // Assuming this based on previous context or placeholder
+            link: 'https://github.com/Winniper'
         },
         {
             name: 'LinkedIn',
             icon: Linkedin,
             color: 'bg-[#0077b5]', // LinkedIn Blue
             hover: 'hover:bg-[#006097]',
-            link: 'https://linkedin.com/in/debadityabarman' // Placeholder
+            link: 'https://www.linkedin.com/in/debaditya-barman-b91748247/'
         },
         {
             name: 'Gmail',
             icon: Mail,
-            color: 'bg-[#43a047]', // Green (like the Platform card in reference) or Gmail Red
+            color: 'bg-[#43a047]', // Green
             hover: 'hover:bg-[#2e7d32]',
-            link: 'mailto:your.email@gmail.com'
+            link: 'mailto:debadityabarman12@gmail.com'
         }
     ];
 
