@@ -5,28 +5,29 @@ import WindowControls from '../components/WindowControl';
 
 const Resume = () => {
     return (
-        <>
-            <div id="window-header">
+        <div className="flex flex-col rounded-2xl overflow-hidden shadow-2xl">
+            {/* Dark macOS-style header */}
+            <div className="flex items-center justify-between px-4 py-3 bg-[#2d2d2d] border-b border-[#1a1a1a]">
                 <WindowControls target="resume" />
-                <p>Resume.pdf</p>
+                <span className="text-[13px] font-medium text-gray-300">Resume.pdf</span>
                 <a
                     href="/files/resume.pdf"
                     download="Resume.pdf"
-                    className="flex items-center gap-1 rounded bg-blue-500 px-2 py-1 text-xs font-medium text-white hover:bg-blue-600"
+                    className="text-gray-400 hover:text-white transition-colors"
                 >
-                    <Download size={14} />
-                    <span>Download</span>
+                    <Download size={16} />
                 </a>
             </div>
 
-            <div className="relative h-[70vh] w-full overflow-hidden bg-gray-200">
+            {/* PDF Preview - white background */}
+            <div className="w-[420px] h-[550px] bg-white overflow-auto">
                 <iframe
-                    src="/files/resume.pdf"
+                    src="/files/resume.pdf#toolbar=0&navpanes=0"
                     title="Resume Preview"
-                    className="h-full w-full border-none"
+                    className="w-full h-full border-none"
                 />
             </div>
-        </>
+        </div>
     );
 };
 

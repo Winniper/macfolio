@@ -1,46 +1,60 @@
 import React from 'react';
-import { Check } from 'lucide-react';
+import { Check, MessageSquare } from 'lucide-react';
 import WindowWrapper from '../hoc/WindowWrapper';
 import WindowControls from '../components/WindowControl';
 import { techStack } from '../constants';
 
 const Terminal = () => {
     return (
-        <>
-            <div id="window-header">
+        <div className="flex flex-col rounded-2xl overflow-hidden backdrop-blur-xl bg-[#1a2f38]/90 border border-white/10 shadow-2xl min-w-[420px]">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3">
                 <WindowControls target="terminal" />
-                <p>User — -zsh — 80x24</p>
-                <div></div>
+                <span className="text-[14px] font-medium text-white/90">Tech Stack</span>
+                <div className="w-[68px]"></div>
             </div>
 
-            <div className="terminal-body">
-                <div className="prompt-line">
-                    <span className="text-[#32cd32]">➜</span>
-                    <span className="text-[#6bb3f8]">~</span>
-                    <span className="text-[#e0e0e0]">show-tech-stack</span>
+            {/* Terminal body */}
+            <div className="px-6 pb-6 pt-2 font-mono text-sm">
+                {/* Command prompt */}
+                <div className="flex items-center gap-2 mb-6 text-gray-300">
+                    <span className="text-purple-400">@adrian</span>
+                    <span className="text-white/60">%</span>
+                    <span className="text-white/80">show tech stack</span>
                 </div>
 
-                <div className="space-y-4">
+                {/* Table header */}
+                <div className="grid grid-cols-[140px_1fr] gap-4 mb-4 text-white/60 text-xs uppercase tracking-wider">
+                    <span>Category</span>
+                    <span>Technologies</span>
+                </div>
+
+                {/* Tech stack rows */}
+                <div className="space-y-2">
                     {techStack.map(({ category, items }) => (
-                        <div key={category}>
-                            <div className="category-label">{category}:</div>
-                            <div className="grid grid-cols-2 gap-2 pl-4">
-                                {items.map((item) => (
-                                    <div key={item} className="tech-item">
-                                        <Check size={14} className="check-icon" />
-                                        <span>{item}</span>
-                                    </div>
-                                ))}
+                        <div key={category} className="grid grid-cols-[140px_1fr] gap-4 items-start">
+                            <div className="flex items-center gap-2">
+                                <Check size={16} className="text-emerald-400" />
+                                <span className="text-cyan-400 font-medium">{category}</span>
                             </div>
+                            <span className="text-gray-300">{items.join(', ')}</span>
                         </div>
                     ))}
                 </div>
 
-                <div className="footer-text">
-                    ✓ {techStack.length} of {techStack.length} stacks loaded successfully...
+                {/* Footer */}
+                <div className="mt-6 pt-4 border-t border-white/10 space-y-2">
+                    <div className="flex items-center gap-2 text-emerald-400 text-xs">
+                        <Check size={14} />
+                        <span>{techStack.length} of {techStack.length} stacks loaded successfully (100%)</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-400 text-xs">
+                        <MessageSquare size={14} />
+                        <span>Render time: 6ms</span>
+                    </div>
                 </div>
             </div>
-        </>
+        </div>
     );
 };
 
