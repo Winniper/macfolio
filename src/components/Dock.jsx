@@ -17,8 +17,8 @@ const Dock = () => {
 
         const handleMouseEnter = (e) => {
             gsap.to(e.currentTarget, {
-                scale: 1.4,
-                y: -12,
+                scale: 1.2,
+                y: -8,
                 duration: 0.2,
                 ease: 'power1.out',
             });
