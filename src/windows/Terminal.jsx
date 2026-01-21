@@ -1,35 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import { Check, MessageSquare, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Check, MessageSquare, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import WindowWrapper from '../hoc/WindowWrapper';
 import WindowControls from '../components/WindowControl';
-import { techStack as fallbackTechStack } from '../constants';
 
 const Terminal = () => {
     const [skills, setSkills] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    const fetchSkills = useCallback(async () => {
+        setError(null);
+        setLoading(true);
+        try {
+            const snapshot = await getDocs(collection(db, 'skills'));
+            const skillsList = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setSkills(skillsList);
+        } catch (err) {
+            console.error('Error fetching skills:', err);
+            setError('Unable to fetch skills from database');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
-        const fetchSkills = async () => {
-            try {
-                const snapshot = await getDocs(collection(db, 'skills'));
-                const skillsList = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-                // If no skills in Firestore, use fallback
-                setSkills(skillsList.length > 0 ? skillsList : fallbackTechStack);
-            } catch (error) {
-                console.error('Error fetching skills:', error);
-                // Use fallback if Firebase not configured
-                setSkills(fallbackTechStack);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchSkills();
-    }, []);
+    }, [fetchSkills]);
 
     return (
         <div className="flex flex-col rounded-xl overflow-hidden shadow-2xl w-[min(480px,90vw)]">
@@ -41,7 +42,7 @@ const Terminal = () => {
             </div>
 
             {/* Terminal body - solid black */}
-            <div className="bg-[#1e1e1e] px-6 py-5 font-mono text-sm">
+            <div className="bg-[#1e1e1e] px-6 py-5 font-mono text-sm min-h-[200px]">
                 {/* Command prompt */}
                 <div className="flex items-center gap-2 mb-6 text-gray-300">
                     <span className="text-purple-400">@Debaditya</span>
@@ -50,9 +51,28 @@ const Terminal = () => {
                 </div>
 
                 {loading ? (
-                    <div className="flex items-center gap-2 text-gray-400">
-                        <Loader2 size={16} className="animate-spin" />
-                        <span>Loading skills...</span>
+                    <div className="flex flex-col items-center justify-center py-8 gap-3">
+                        <Loader2 size={32} className="animate-spin text-purple-400" />
+                        <span className="text-gray-400">Fetching skills...</span>
+                    </div>
+                ) : error ? (
+                    <div className="flex flex-col items-center justify-center py-8 gap-4">
+                        <div className="flex items-center gap-2 text-red-400">
+                            <AlertTriangle size={20} />
+                            <span>Error: {error}</span>
+                        </div>
+                        <button
+                            onClick={fetchSkills}
+                            className="flex items-center gap-2 px-4 py-2 bg-[#333] hover:bg-[#444] text-gray-300 rounded-md transition-colors"
+                        >
+                            <RefreshCw size={14} />
+                            <span>Retry</span>
+                        </button>
+                    </div>
+                ) : skills.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8 gap-2 text-gray-500">
+                        <span>No skills configured yet.</span>
+                        <span className="text-xs">Add them in the admin panel.</span>
                     </div>
                 ) : (
                     <>

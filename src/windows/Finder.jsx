@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     AppWindow,
     Cloud,
@@ -9,6 +9,9 @@ import {
     Monitor,
     ChevronLeft,
     ChevronRight,
+    Loader2,
+    AlertTriangle,
+    RefreshCw,
 } from 'lucide-react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -49,28 +52,31 @@ const Finder = () => {
     const [currentFolder, setCurrentFolder] = useState(null);
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     // Fetch projects from Firestore
-    useEffect(() => {
-        const fetchProjects = async () => {
-            try {
-                const q = query(collection(db, 'projects'), orderBy('order', 'asc'));
-                const snapshot = await getDocs(q);
-                const projectsList = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-                setProjects(projectsList);
-            } catch (error) {
-                console.error('Error fetching projects:', error);
-                // Fallback to empty array if Firebase not configured
-                setProjects([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchProjects();
+    const fetchProjects = useCallback(async () => {
+        setError(null);
+        setLoading(true);
+        try {
+            const q = query(collection(db, 'projects'), orderBy('order', 'asc'));
+            const snapshot = await getDocs(q);
+            const projectsList = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setProjects(projectsList);
+        } catch (err) {
+            console.error('Error fetching projects:', err);
+            setError('Unable to load projects');
+        } finally {
+            setLoading(false);
+        }
     }, []);
+
+    useEffect(() => {
+        fetchProjects();
+    }, [fetchProjects]);
 
     // Get current items based on folder level
     const getCurrentItems = () => {
@@ -208,8 +214,26 @@ const Finder = () => {
 
                 <div className="flex-1 bg-[#1e1e1e] p-4" onClick={() => setSelectedItem(null)}>
                     {loading && currentFolder === 'projects' ? (
-                        <div className="flex items-center justify-center h-full text-gray-400">
-                            Loading projects...
+                        <div className="flex flex-col items-center justify-center h-full gap-3">
+                            <Loader2 size={32} className="animate-spin text-blue-400" />
+                            <span className="text-gray-400">Loading projects...</span>
+                        </div>
+                    ) : error && currentFolder === 'projects' ? (
+                        <div className="flex flex-col items-center justify-center h-full gap-4">
+                            <div className="flex items-center gap-2 text-red-400">
+                                <AlertTriangle size={20} />
+                                <span>{error}</span>
+                            </div>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    fetchProjects();
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 bg-[#333] hover:bg-[#444] text-gray-300 rounded-md transition-colors"
+                            >
+                                <RefreshCw size={14} />
+                                <span>Retry</span>
+                            </button>
                         </div>
                     ) : (
                         <div className="grid grid-cols-4 gap-4">
@@ -238,7 +262,7 @@ const Finder = () => {
                                     </span>
                                 </div>
                             ))}
-                            {currentItems.length === 0 && currentFolder === 'projects' && !loading && (
+                            {currentItems.length === 0 && currentFolder === 'projects' && !loading && !error && (
                                 <div className="col-span-4 text-center text-gray-500 py-8">
                                     No projects yet. Add them in the admin panel.
                                 </div>
