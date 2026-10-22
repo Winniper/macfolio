@@ -42,6 +42,19 @@ describe('normalizeAddress', () => {
     });
 });
 
+describe('non-string input', () => {
+    it('never throws and yields null', () => {
+        for (const value of [42, null, undefined, {}, true]) {
+            expect(() => normalizeAddress(value)).not.toThrow();
+            expect(normalizeAddress(value)).toBeNull();
+        }
+    });
+
+    it('skips projects whose website is not a string', () => {
+        expect(favoritesFromProjects([{ id: 'x', title: 'X', website: 42 }])).toEqual([]);
+    });
+});
+
 describe('entries and favorites', () => {
     it('names a page after its host', () => {
         expect(hostnameOf('https://www.example.com/a')).toBe('example.com');

@@ -18,11 +18,12 @@ import useWindowStore from '../store/window';
 
 // Embedded sites may run scripts, submit forms and open popups, but never
 // navigate the portfolio itself (no allow-top-navigation).
-const IFRAME_SANDBOX = 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox';
+const IFRAME_SANDBOX = 'allow-scripts allow-same-origin allow-forms allow-modals allow-downloads allow-popups allow-popups-to-escape-sandbox';
 
 const Browser = () => {
     const [browser, dispatch] = useReducer(browserReducer, undefined, createBrowserState);
     const [draft, setDraft] = useState(null);
+    const isOpen = useWindowStore((state) => state.windows.safari.isOpen);
     const request = useWindowStore((state) => state.windows.safari.data);
 
     const tab = activeTab(browser);
@@ -31,9 +32,14 @@ const Browser = () => {
     // openWindow('safari', { url, title }) — e.g. from Finder — opens a new tab.
     // Each call passes a new object, so the same project twice opens twice.
     useEffect(() => {
-        const url = request?.url ? normalizeAddress(request.url) : null;
+        if (!request?.url) return;
 
-        if (url) dispatch({ type: 'newTab', entry: pageEntry(url, request.title) });
+        const url = normalizeAddress(request.url);
+
+        dispatch({
+            type: 'newTab',
+            entry: url ? pageEntry(url, request.title) : errorEntry(String(request.url)),
+        });
     }, [request]);
 
     const open = (entryToOpen) => {
@@ -143,7 +149,8 @@ const Browser = () => {
                 {browser.tabs.map((item) => {
                     const itemEntry = currentEntry(item);
 
-                    if (!itemEntry.url) return null;
+                    // Closed Safari stops its sites; tabs and history stay in the reducer.
+                    if (!itemEntry.url || !isOpen) return null;
 
                     return (
                         <iframe
@@ -151,6 +158,7 @@ const Browser = () => {
                             title={itemEntry.title}
                             src={itemEntry.url}
                             sandbox={IFRAME_SANDBOX}
+                            allow="fullscreen"
                             referrerPolicy="strict-origin-when-cross-origin"
                             className="browser-frame"
                             hidden={item.id !== browser.activeTabId}

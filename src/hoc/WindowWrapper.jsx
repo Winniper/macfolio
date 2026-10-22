@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import Draggable from 'gsap/Draggable';
@@ -221,6 +221,31 @@ const WindowWrapper = (WrappedComponent, windowKey) => {
                 dragRef.current = null;
             };
         }, []);
+
+        // A click inside a cross-origin iframe never reaches onPointerDown, but
+        // it blurs the parent window. If focus landed in one of this window's
+        // iframes, bring the window to the front.
+        useEffect(() => {
+            let timer;
+
+            const handleBlur = () => {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    const active = document.activeElement;
+
+                    if (active?.tagName === 'IFRAME' && windowRef.current?.contains(active)) {
+                        focusWindow(windowKey);
+                    }
+                }, 0);
+            };
+
+            window.addEventListener('blur', handleBlur);
+
+            return () => {
+                clearTimeout(timer);
+                window.removeEventListener('blur', handleBlur);
+            };
+        }, [focusWindow]);
 
         const startResize = (edge) => (event) => {
             if (event.button !== 0) return;

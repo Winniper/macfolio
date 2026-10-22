@@ -7,6 +7,10 @@ const WEB_PROTOCOLS = ['http:', 'https:'];
 // Turns address-bar text into an absolute http(s) URL, or null when it isn't
 // one (spaces, bare words, javascript:, data:, ftp:, …).
 export const normalizeAddress = (input) => {
+    // Firestore data is untyped: anything but a string is simply not an address
+    // (String(42) would even parse as the IP 0.0.0.42).
+    if (typeof input !== 'string') return null;
+
     const value = input.trim();
 
     if (!value || /\s/.test(value)) return null;
@@ -35,7 +39,7 @@ export const errorEntry = (input) => ({ url: null, error: input, title: 'Failed 
 
 export const favoritesFromProjects = (projects) =>
     projects
-        .map((project) => ({ project, url: normalizeAddress(project.website ?? '') }))
+        .map((project) => ({ project, url: normalizeAddress(project.website) }))
         .filter(({ url }) => url)
         .map(({ project, url }) => ({ id: project.id, title: project.title, url }));
 
