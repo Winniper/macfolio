@@ -9,3 +9,11 @@ export const getPlatform = () =>
 
 export const isMissionControlKey = (event, isMac) =>
     !isMac && event.ctrlKey && event.key === 'ArrowUp';
+
+// The held modifier that starts the app switcher, or null: Option+Tab on
+// macOS (Windows reserves Alt+Tab), Ctrl+` everywhere.
+export const switcherModifier = (event, isMac) => {
+    if (isMac && event.altKey && event.key === 'Tab') return 'Alt';
+    if (event.ctrlKey && event.code === 'Backquote') return 'Control';
+    return null;
+};

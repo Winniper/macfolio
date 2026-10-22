@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isMacPlatform, isMissionControlKey } from './shortcuts';
+import { isMacPlatform, isMissionControlKey, switcherModifier } from './shortcuts';
 
 describe('isMacPlatform', () => {
     it('recognizes macOS platform strings', () => {
@@ -25,5 +25,25 @@ describe('isMissionControlKey', () => {
 
     it('ignores ArrowUp without Ctrl', () => {
         expect(isMissionControlKey({ ctrlKey: false, key: 'ArrowUp' }, false)).toBe(false);
+    });
+});
+
+describe('switcherModifier', () => {
+    it('starts the switcher with Option+Tab on macOS', () => {
+        expect(switcherModifier({ altKey: true, ctrlKey: false, key: 'Tab', code: 'Tab' }, true)).toBe('Alt');
+    });
+
+    it('leaves Alt+Tab to Windows/Linux', () => {
+        expect(switcherModifier({ altKey: true, ctrlKey: false, key: 'Tab', code: 'Tab' }, false)).toBeNull();
+    });
+
+    it('starts the switcher with Ctrl+` everywhere', () => {
+        const event = { altKey: false, ctrlKey: true, key: '`', code: 'Backquote' };
+        expect(switcherModifier(event, true)).toBe('Control');
+        expect(switcherModifier(event, false)).toBe('Control');
+    });
+
+    it('ignores plain Tab', () => {
+        expect(switcherModifier({ altKey: false, ctrlKey: false, key: 'Tab', code: 'Tab' }, true)).toBeNull();
     });
 });

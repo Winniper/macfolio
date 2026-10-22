@@ -397,3 +397,41 @@ body.mission-control-open [data-window] > * {
   top: 0;
   right: 0;
 }
+
+/* App switcher overlay (Option+Tab / Ctrl+`). */
+.app-switcher {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px 12px;
+  border-radius: 24px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: rgb(30 30 30 / 0.75);
+  backdrop-filter: blur(24px);
+}
+.app-switcher-row {
+  display: flex;
+  gap: 12px;
+}
+.app-switcher-item {
+  padding: 8px;
+  border-radius: 16px;
+}
+.app-switcher-item.is-selected {
+  background: rgb(255 255 255 / 0.18);
+}
+.app-switcher-item img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+.app-switcher-title {
+  font-size: 13px;
+  color: white;
+}

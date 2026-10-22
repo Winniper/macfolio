@@ -8,6 +8,7 @@ import { Draggable } from "gsap/all"
 import { Analytics } from "@vercel/analytics/react"
 import useWindowStore from "@store/window"
 import MissionControl from "@components/system/MissionControl"
+import AppSwitcher from "@components/system/AppSwitcher"
 
 gsap.registerPlugin(Draggable)
 
@@ -40,6 +41,7 @@ function App() {
       <Contact />
       <Dock />
       <MissionControl />
+      <AppSwitcher />
       <Analytics />
     </main>
   )
