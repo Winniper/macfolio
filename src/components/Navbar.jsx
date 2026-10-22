@@ -2,8 +2,10 @@ import React from 'react'
 import { navLinks, navIcons } from '@constants'
 import useWindowStore from '../store/window'
 import dayjs from 'dayjs'
+import useClock from '../hooks/useClock'
 
 const Navbar = () => {
+  const now = useClock()
   const { openWindow } = useWindowStore()
 
   const handleNavClick = (type) => {
@@ -31,7 +33,7 @@ const Navbar = () => {
             </li>
           ))}
         </ul>
-        <time>{dayjs().format("ddd MMM D h:mm A")}</time>
+        <time>{dayjs(now).format("ddd MMM D h:mm A")}</time>
       </div>
     </nav>
   )
