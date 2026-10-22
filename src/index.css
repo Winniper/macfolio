@@ -74,6 +74,12 @@ body {
       @apply inline-block;
     }
 
+    /* Inline-block letters can wrap between each other; keep each run on one line. */
+    > p,
+    > div:not(.small-screen) {
+      @apply whitespace-nowrap;
+    }
+
     .small-screen {
       @apply sm:hidden m-7 bg-red-300/20 backdrop-blur-lg p-3 rounded-md absolute top-10;
 
