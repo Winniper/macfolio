@@ -127,6 +127,17 @@ describe('bounds', () => {
         expect(store().windows.finder.bounds).toEqual({ x: 0, y: MENU_BAR_HEIGHT, w: 520, h: 320 });
     });
 
+    it('stores a fresh bounds object even when clamping gives the same values', () => {
+        // WindowWrapper re-applies geometry whenever this reference changes; a drag
+        // past the same clamp twice must still correct the DOM.
+        store().openWindow('finder');
+        store().setBounds('finder', { x: -5000, y: 80, w: 760, h: 444 });
+        const first = store().windows.finder.bounds;
+        store().setBounds('finder', { x: -6000, y: 80, w: 760, h: 444 });
+        expect(store().windows.finder.bounds).toEqual(first);
+        expect(store().windows.finder.bounds).not.toBe(first);
+    });
+
     it('reopens a window where it was left', () => {
         store().openWindow('finder');
         store().setBounds('finder', { x: 300, y: 200, w: 600, h: 400 });
