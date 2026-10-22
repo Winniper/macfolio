@@ -45,3 +45,25 @@ describe('Mission Control state', () => {
         expect(system().missionControl).toBeNull();
     });
 });
+
+describe('switchToApp', () => {
+    it('leaves Mission Control and restores a minimized app', () => {
+        windows().openWindow('finder');
+        windows().openWindow('terminal');
+        windows().minimizeWindow('terminal');
+        system().openMissionControl();
+        system().switchToApp('terminal');
+        expect(system().missionControl).toBeNull();
+        expect(windows().windows.terminal.isMinimized).toBe(false);
+        expect(windows().focusedId).toBe('terminal');
+    });
+
+    it('leaves Mission Control and focuses a visible app', () => {
+        windows().openWindow('finder');
+        windows().openWindow('terminal');
+        system().openMissionControl();
+        system().switchToApp('finder');
+        expect(system().missionControl).toBeNull();
+        expect(windows().focusedId).toBe('finder');
+    });
+});

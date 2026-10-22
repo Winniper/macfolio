@@ -34,6 +34,17 @@ const useSystemStore = create(
       if (get().missionControl) get().closeMissionControl();
       else get().openMissionControl();
     },
+
+    // Switching apps (e.g. from the app switcher) leaves Mission Control first:
+    // its layout is a snapshot and would go stale under the switched-to window.
+    switchToApp: (key) => {
+      if (get().missionControl) get().closeMissionControl();
+
+      const { windows, focusWindow, restoreWindow } = useWindowStore.getState();
+
+      if (windows[key]?.isMinimized) restoreWindow(key);
+      else focusWindow(key);
+    },
   }))
 );
 

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { getApp } from '../../constants/apps';
 import { getPlatform, isMacPlatform } from '../../lib/shortcuts';
 import { switcherOrder, switcherReducer } from '../../lib/switcher';
+import useSystemStore from '../../store/system';
 import useWindowStore from '../../store/window';
 
 const isMac = isMacPlatform(getPlatform());
@@ -14,7 +15,7 @@ const AppSwitcher = () => {
 
     useEffect(() => {
         const dispatch = (action, event) => {
-            const { windows, focusWindow, restoreWindow } = useWindowStore.getState();
+            const { windows } = useWindowStore.getState();
             const { state, commit, handled } = switcherReducer(
                 switcherRef.current,
                 action,
@@ -28,10 +29,7 @@ const AppSwitcher = () => {
                 setSwitcher(state);
             }
 
-            if (commit) {
-                if (windows[commit].isMinimized) restoreWindow(commit);
-                else focusWindow(commit);
-            }
+            if (commit) useSystemStore.getState().switchToApp(commit);
         };
 
         const handleKeyDown = (event) => dispatch({

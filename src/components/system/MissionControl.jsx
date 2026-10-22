@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
 import { getApp } from '../../constants/apps';
+import { shouldOpenFromHotCorner } from '../../lib/hotCorner';
 import { getPlatform, isMacPlatform, isMissionControlKey } from '../../lib/shortcuts';
 import useSystemStore from '../../store/system';
 
@@ -41,7 +42,8 @@ const MissionControl = () => {
         return () => clearTimeout(timeoutId);
     }, [missionControl]);
 
-    const handleHotCorner = () => {
+    const handleHotCorner = (event) => {
+        if (!shouldOpenFromHotCorner(event)) return;
         if (!useSystemStore.getState().missionControl) openMissionControl();
     };
 
