@@ -10,18 +10,26 @@ import useSystemStore from '../../store/system';
 const initials = (name) =>
     name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase();
 
+const MODIFIER_KEYS = new Set(['Meta', 'Alt', 'Control', 'Shift']);
+
 // Blurred desktop, clock, and the visitor's way in: any click or key slides
 // the lock screen up and reveals the desktop.
 const LockScreen = () => {
     const rootRef = useRef(null);
     const unlock = useSystemStore((state) => state.unlock);
+    const bootPhase = useSystemStore((state) => state.bootPhase);
     const now = useClock();
 
     useEffect(() => {
+        // Listen only once locked: the key/click that skips the boot must not
+        // also dismiss the lock screen mounted beneath it.
+        if (bootPhase !== 'locked') return;
+
         const root = rootRef.current;
         let leaving = false;
 
-        const leave = () => {
+        const leave = (event) => {
+            if (event.type === 'keydown' && (event.repeat || MODIFIER_KEYS.has(event.key))) return;
             if (leaving) return;
             leaving = true;
 
@@ -38,7 +46,7 @@ const LockScreen = () => {
             root.removeEventListener('pointerdown', leave);
             gsap.killTweensOf(root);
         };
-    }, [unlock]);
+    }, [unlock, bootPhase]);
 
     return (
         <div ref={rootRef} className="lock-screen">

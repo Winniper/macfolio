@@ -47,8 +47,9 @@ function App() {
       <MissionControl />
       <AppSwitcher />
       <Analytics />
+      {/* Lock screen sits under the boot layer so the boot fades into it. */}
+      {(bootPhase === "booting" || bootPhase === "locked") && <LockScreen />}
       {bootPhase === "booting" && <BootScreen />}
-      {bootPhase === "locked" && <LockScreen />}
     </main>
   )
 }

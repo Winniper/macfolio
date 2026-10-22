@@ -65,7 +65,7 @@ const useSystemStore = create(
       });
     },
 
-    // Open windows are untouched; Mission Control is left so the overlay
+    // Open windows are untouched; Mission Control is closed so the overlay
     // isn't covering a stale grid when the desktop comes back.
     lock: () =>
       set((state) => {

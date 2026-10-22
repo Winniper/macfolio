@@ -2,6 +2,7 @@ import React, { useRef } from 'react'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
 import useSystemStore from '../store/system'
+import { prefersReducedMotion } from '../lib/boot'
 
 const FONT_WEIGHTS = {
     subtitle: { min: 100, max: 400, default: 100 },
@@ -62,17 +63,33 @@ const Welcome = () => {
     const bootPhase = useSystemStore((state) => state.bootPhase)
     const previousPhaseRef = useRef(bootPhase)
 
-    // Letters rise in when the visitor arrives at the desktop from the lock screen.
+    // Letters stay hidden until the visitor arrives at the desktop, then rise
+    // in. A load that starts on the desktop (refresh, small screens) shows them
+    // as-is.
     useGSAP(() => {
         const entering = bootPhase === 'desktop' && previousPhaseRef.current !== 'desktop'
         previousPhaseRef.current = bootPhase
 
-        if (!entering) return
-
         const letters = [titleRef.current, subtitleRef.current]
             .flatMap((element) => [...element.querySelectorAll('span')])
+        const reduced = prefersReducedMotion()
+        const offset = reduced ? 0 : 24
 
-        gsap.from(letters, { opacity: 0, y: 24, duration: 0.6, stagger: 0.02, ease: 'power3.out', delay: 0.15 })
+        if (bootPhase !== 'desktop') {
+            gsap.set(letters, { opacity: 0, y: offset })
+            return
+        }
+
+        if (!entering) return
+
+        gsap.to(letters, {
+            opacity: 1,
+            y: 0,
+            duration: reduced ? 0.3 : 0.6,
+            stagger: reduced ? 0 : 0.02,
+            ease: 'power3.out',
+            overwrite: 'auto'
+        })
     }, { dependencies: [bootPhase] })
 
     useGSAP(() => {
