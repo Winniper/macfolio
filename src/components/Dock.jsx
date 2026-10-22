@@ -4,10 +4,11 @@ import { Tooltip } from 'react-tooltip';
 
 import { dockApps } from '../constants';
 import useWindowStore from '../store/window';
+import { getDockAction } from '../lib/dock';
 
 const Dock = () => {
     const dockRef = useRef(null);
-    const { windows, openWindow, closeWindow } = useWindowStore();
+    const { windows, openWindow, focusWindow } = useWindowStore();
 
     useEffect(() => {
         const dock = dockRef.current;
@@ -46,18 +47,11 @@ const Dock = () => {
         };
     }, []);
 
-    const toggleApp = (app) => {
-        if (!app.canOpen) return;
+    const handleAppClick = (app) => {
+        const action = getDockAction(app.canOpen ? windows[app.id] : undefined);
 
-        const window = windows[app.id];
-
-        if (!window) return;
-
-        if (window.isOpen) {
-            closeWindow(app.id);
-        } else {
-            openWindow(app.id);
-        }
+        if (action === 'open') openWindow(app.id);
+        if (action === 'focus') focusWindow(app.id);
     };
 
     return (
@@ -72,10 +66,10 @@ const Dock = () => {
                             data-tooltip-id="dock-tooltip"
                             data-tooltip-content={app.name}
                             disabled={!app.canOpen}
-                            onClick={() => toggleApp(app)}
+                            onClick={() => handleAppClick(app)}
                         >
                             <img
-                                src={`/images/${app.icon}`}
+                                src={app.icon}
                                 alt={app.name}
                                 loading="lazy"
                                 className={!app.canOpen ? 'opacity-60' : ''}

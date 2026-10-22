@@ -16,7 +16,7 @@ npx eslint src/windows/Finder.jsx   # lint a single file
 
 `npm test` runs Vitest once (`vitest run`); `npm test -- src/store/window.test.js` runs one file. Tests cover pure logic only (registry, stores, `src/lib/` helpers) — UI is verified by running `npm run dev`. Never import a window component or `src/lib/firebase.js` from a test: Firebase throws at init without `.env`.
 
-Requires a `.env` with the six `VITE_FIREBASE_*` keys (see `src/lib/firebase.js`); the app throws at Firebase init without them. `Maps.jsx` also reads `VITE_MAPBOX_TOKEN`, but only matters if that window is ever wired up.
+Requires a `.env` with the six `VITE_FIREBASE_*` keys (see `src/lib/firebase.js`); the app throws at Firebase init without them.
 
 ## Architecture
 
@@ -28,21 +28,16 @@ A macOS-desktop-simulation portfolio: React 19 + Vite 7 + Tailwind 4, GSAP for d
 
 ### The window system
 
-The central abstraction. Understanding it requires `src/constants/index.js` (`WINDOW_CONFIG`), `src/store/window.js`, and `src/hoc/WindowWrapper.jsx` together.
+The central abstraction. Understanding it requires `src/constants/apps.js` (the registry), `src/store/window.js`, and `src/hoc/WindowWrapper.jsx` together.
 
-- `WINDOW_CONFIG` is the registry: a map of `windowKey → { isOpen, zIndex, data }`. It seeds the Zustand store directly.
+- The store seed comes from `buildWindowConfig()` in `apps.js`: a map of `windowKey → { isOpen, zIndex, data }`.
 - `WindowWrapper(Component, windowKey)` wraps a window component in a `<section id={windowKey}>` that is absolutely positioned, GSAP-`Draggable`, toggles `display` on `isOpen`, and calls `focusWindow(key)` on press.
 - `App.jsx` renders **every** window component unconditionally; the store decides what is visible. There is no mounting/unmounting, so window components keep their local state across close/reopen.
 - Focus is a monotonically increasing `nextZIndex` counter — z-index only ever goes up, never gets compacted.
 - `openWindow(key, data)` accepts an optional payload stored on the window; `closeWindow` clears it.
+- The store tracks `focusedId`; closing the focused window hands focus to the next-topmost open one.
 
-**The `windowKey` string is a four-way contract.** Adding or renaming a window means touching all of:
-1. `WINDOW_CONFIG` in `src/constants/index.js`
-2. the `WindowWrapper(Comp, 'key')` call at the bottom of the window component
-3. the entry in `dockApps` and/or `desktopItems` (their `id` is passed straight to `openWindow`)
-4. `#key` CSS selectors in `src/index.css`, plus the barrel export in `src/windows/index.js` and a render in `App.jsx`
-
-**Known drift here:** `WINDOW_CONFIG` declares `safari`, `photos`, `txtfile`, `imgfile`, and `maps`, but only `finder`, `contact`, `resume`, and `terminal` are rendered in `App.jsx`. `Maps.jsx` exists and is wrapped, but is neither exported from `src/windows/index.js` nor rendered. Clicking the Safari/Photos dock icons flips store state with no component to show. Expect this when a window "does nothing".
+**`src/constants/apps.js` is the app registry** — pure data, no component imports (so the store and tests load it without Firebase). Dock items, desktop icons and the store seed are all derived from it; `placement` lists where an app's icon appears (`'dock'`, `'desktop'`), and `hasWindow: false` marks launchers like Archive. Adding a window means: a registry entry, a component ending in `WindowWrapper(Comp, '<same id>')`, its barrel export in `src/windows/index.js`, a render in `App.jsx`, and `#id` CSS in `src/index.css` if it needs custom styling. New apps go on the desktop, not the dock.
 
 ### Data flow
 
@@ -54,7 +49,7 @@ Firestore collections and Storage paths are hardcoded at each call site rather t
 | `skills` collection | `windows/Terminal.jsx` | `components/admin/SkillsManager.jsx` |
 | Storage `resume/resume.pdf` | `windows/Resume.jsx` | `components/admin/ResumeUploader.jsx` |
 
-Everything else (dock apps, nav links, gallery, blog posts, socials, tech stack, map locations, the Finder `locations` tree) is static in `src/constants/index.js` — a ~550-line file that is the de-facto content database.
+Everything else (nav links, gallery, blog posts, socials, tech stack, the Finder `locations` tree) is static in `src/constants/index.js` — a ~450-line file that is the de-facto content database (dock and desktop items live in `apps.js` instead).
 
 **Access control is not in this repo.** `VITE_*` vars are inlined into the client bundle, so the Firebase config is public; `ProtectedRoute` gates only the admin *UI*. Whether the public can write to `projects`/`skills`/Storage depends entirely on Firestore/Storage Security Rules, and there is no `firestore.rules` or `firebase.json` here — the rules exist only in the Firebase console. Any new collection needs rules set there (or added to the repo).
 
@@ -80,6 +75,6 @@ Tailwind 4 via `@tailwindcss/vite`, no config file — theme lives in the `@them
 
 ESLint's only custom rule is `no-unused-vars` with `varsIgnorePattern: '^[A-Z_]'` — unused capitalized identifiers (components, constants) don't error.
 
-**`npm run lint` is not clean on `main`** — 40 pre-existing errors, almost all `react-refresh/only-export-components` from window files that define helper components alongside the default export and from `export default WindowWrapper(X, 'key')` being an anonymous export. Diff against the baseline rather than assuming a failing lint means you broke something.
+**`npm run lint` is not clean** — 10 pre-existing errors: mostly `react-refresh/only-export-components` from window files that define helper components alongside the default export and from `export default WindowWrapper(X, 'key')` being an anonymous export, plus two `no-unused-vars`. Diff against that baseline rather than assuming a failing lint means you broke something. (`._*` AppleDouble files are ignored in `eslint.config.js` and `vite.config.js`'s `test.exclude`; before that, each one counted as a parse error.)
 
 The repo is on a case-insensitive external volume and is littered with AppleDouble `._*` files; they're gitignored — ignore them in listings and never edit them.

@@ -53,7 +53,7 @@ src/
 ├── components/     # Reusable UI components (Navbar, Dock, etc.)
 ├── windows/        # Window components (Terminal, Finder, Contact, Resume)
 ├── pages/          # Route pages (admin/Login, admin/Dashboard)
-├── store/          # Zustand stores (window.js, map.js)
+├── store/          # Zustand stores (window.js)
 ├── context/        # React Context (AuthContext.jsx)
 ├── hoc/            # Higher-order components (WindowWrapper.jsx)
 ├── constants/      # Static data and configuration (index.js)
@@ -91,7 +91,7 @@ import WindowWrapper from "@hoc/WindowWrapper"
 
 ### File Naming
 - **Components**: PascalCase (e.g., `Dock.jsx`, `WindowWrapper.jsx`)
-- **Stores**: camelCase (e.g., `window.js`, `map.js`)
+- **Stores**: camelCase (e.g., `window.js`)
 - **Barrel files**: `index.js` for re-exports
 
 ### Component Structure
@@ -253,6 +253,8 @@ const { windows, openWindow, closeWindow, focusWindow } = useWindowStore();
 openWindow('terminal');
 closeWindow('finder');
 ```
+
+Apps are declared once in `src/constants/apps.js`; dock and desktop icons are derived from it. Clicking a dock icon opens a closed window or focuses an open one — it never closes it.
 
 ### GSAP Animations
 Register plugins at app entry, use `useGSAP` hook for React integration:

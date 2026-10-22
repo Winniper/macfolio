@@ -1,3 +1,5 @@
+import { dockApps, desktopItems } from './apps';
+
 const navLinks = [
     {
         id: 1,
@@ -32,45 +34,6 @@ const navIcons = [
     {
         id: 4,
         img: "/icons/mode.svg",
-    },
-];
-
-const dockApps = [
-    {
-        id: "finder",
-        name: "Portfolio", // was "Finder"
-        icon: "finder.png",
-        canOpen: true,
-    },
-    {
-        id: "safari",
-        name: "Articles", // was "Safari"
-        icon: "safari.png",
-        canOpen: true,
-    },
-    {
-        id: "photos",
-        name: "Gallery", // was "Photos"
-        icon: "photos.png",
-        canOpen: true,
-    },
-    {
-        id: "contact",
-        name: "Contact", // or "Get in touch"
-        icon: "contact.png",
-        canOpen: true,
-    },
-    {
-        id: "terminal",
-        name: "Skills", // was "Terminal"
-        icon: "terminal.png",
-        canOpen: true,
-    },
-    {
-        id: "trash",
-        name: "Archive", // was "Trash"
-        icon: "trash.png",
-        canOpen: false,
     },
 ];
 
@@ -204,45 +167,6 @@ const gallery = [
     },
 ];
 
-const mapLocations = [
-    {
-        id: 1,
-        name: 'Kolkata',
-        lat: 22.5726,
-        lng: 88.3639,
-        description: 'My Hometown',
-    },
-    {
-        id: 2,
-        name: 'Bangalore',
-        lat: 12.9716,
-        lng: 77.5946,
-        description: 'Tech Hub',
-    },
-    {
-        id: 3,
-        name: 'San Francisco',
-        lat: 37.7749,
-        lng: -122.4194,
-        description: 'Dream City',
-    },
-];
-
-const desktopItems = [
-    {
-        id: 'finder',
-        title: 'Projects',
-        icon: '/images/folder.png',
-        position: { top: 60, left: 20 },
-    },
-    {
-        id: 'resume',
-        title: 'Resume.pdf',
-        icon: '/images/pdf.png',
-        position: { top: 160, left: 20 },
-    },
-];
-
 export {
     navLinks,
     navIcons,
@@ -252,7 +176,6 @@ export {
     socials,
     photosLinks,
     gallery,
-    mapLocations,
     desktopItems,
 };
 
