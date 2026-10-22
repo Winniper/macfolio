@@ -13,4 +13,8 @@ describe('getDockAction', () => {
     it('focuses an open window instead of closing it', () => {
         expect(getDockAction({ isOpen: true })).toBe('focus');
     });
+
+    it('restores a minimized window', () => {
+        expect(getDockAction({ isOpen: true, isMinimized: true })).toBe('restore');
+    });
 });

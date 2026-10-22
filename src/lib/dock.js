@@ -2,5 +2,6 @@
 // (undefined when the app has no window, e.g. Archive).
 export const getDockAction = (windowState) => {
     if (!windowState) return 'none';
-    return windowState.isOpen ? 'focus' : 'open';
+    if (!windowState.isOpen) return 'open';
+    return windowState.isMinimized ? 'restore' : 'focus';
 };

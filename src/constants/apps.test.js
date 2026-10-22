@@ -37,7 +37,21 @@ describe('app registry', () => {
     it('builds a closed window entry for every windowed app only', () => {
         const config = buildWindowConfig();
         expect(Object.keys(config).sort()).toEqual(['contact', 'finder', 'resume', 'terminal']);
-        expect(config.finder).toEqual({ isOpen: false, zIndex: INITIAL_Z_INDEX, data: null });
+        expect(config.finder).toEqual({
+            isOpen: false, zIndex: INITIAL_Z_INDEX, data: null,
+            isMinimized: false, isMaximized: false, bounds: null, prevBounds: null, originRect: null,
+        });
+    });
+
+    it('gives every windowed app a default size at least its minimum size', () => {
+        APPS.filter((a) => a.hasWindow !== false).forEach((a) => {
+            expect(a.defaultBounds, a.id).toEqual({
+                x: expect.any(Number), y: expect.any(Number), w: expect.any(Number), h: expect.any(Number),
+            });
+            expect(a.minSize, a.id).toEqual({ w: expect.any(Number), h: expect.any(Number) });
+            expect(a.defaultBounds.w, a.id).toBeGreaterThanOrEqual(a.minSize.w);
+            expect(a.defaultBounds.h, a.id).toBeGreaterThanOrEqual(a.minSize.h);
+        });
     });
 
     it('returns fresh objects on each build', () => {
