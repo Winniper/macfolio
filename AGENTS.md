@@ -258,6 +258,8 @@ Apps are declared once in `src/constants/apps.js`; dock and desktop icons are de
 
 Window components mark their header with `data-titlebar` and let their root fill the window (`flex-1 min-h-0 w-full`); default and minimum sizes live in the registry (`defaultBounds`, `minSize`), not in the markup.
 
+Keyboard shortcuts must go through `src/lib/shortcuts.js` so each one is only claimed on platforms whose OS leaves it free.
+
 ### GSAP Animations
 Register plugins at app entry, use `useGSAP` hook for React integration:
 ```javascript

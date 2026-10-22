@@ -20,11 +20,19 @@ describe('app registry', () => {
     });
 
     it('derives dock items in registry order with full icon paths', () => {
-        expect(dockApps.map((a) => a.id)).toEqual(['finder', 'contact', 'terminal', 'trash']);
+        expect(dockApps.map((a) => a.id)).toEqual(['finder', 'contact', 'terminal', 'missionControl', 'trash']);
         expect(dockApps.find((a) => a.id === 'finder')).toEqual({
-            id: 'finder', name: 'Projects', icon: '/images/finder.png', canOpen: true,
+            id: 'finder', name: 'Projects', icon: '/images/finder.png', canOpen: true, action: null,
         });
         expect(dockApps.find((a) => a.id === 'trash').canOpen).toBe(false);
+    });
+
+    it('marks Mission Control as a dock launcher without a window', () => {
+        expect(dockApps.find((a) => a.id === 'missionControl')).toEqual({
+            id: 'missionControl', name: 'Mission Control', icon: '/images/mission-control.svg',
+            canOpen: false, action: 'missionControl',
+        });
+        expect(buildWindowConfig().missionControl).toBeUndefined();
     });
 
     it('derives desktop items using label and desktopIcon overrides', () => {

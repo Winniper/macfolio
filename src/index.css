@@ -358,3 +358,42 @@ body.window-interacting {
 body.window-interacting iframe {
   pointer-events: none;
 }
+
+/* Mission Control: backdrop sits just below windows (z 1000+). */
+.mission-control {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgb(0 0 0 / 0.35);
+  backdrop-filter: blur(6px);
+  animation: mission-control-fade 0.25s ease-out;
+}
+@keyframes mission-control-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.mission-control-label {
+  position: absolute;
+  text-align: center;
+  font-size: 13px;
+  color: white;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.6);
+  pointer-events: none;
+}
+/* While open, a click on a window only picks it: its content can't be used. */
+body.mission-control-open [data-window] {
+  cursor: pointer;
+}
+body.mission-control-open [data-window] > * {
+  pointer-events: none;
+}
+.hot-corner {
+  position: fixed;
+  z-index: 100001;
+  width: 6px;
+  height: 6px;
+}
+.hot-corner-top-right {
+  top: 0;
+  right: 0;
+}

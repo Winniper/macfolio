@@ -7,6 +7,7 @@ import { getApp } from '../constants/apps';
 import { createAnimationSlot } from '../lib/animationSlot';
 import { resizeBounds, toRect, transformToRect } from '../lib/bounds';
 import useWindowStore from '../store/window';
+import useSystemStore from '../store/system';
 
 const RESIZE_EDGES = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
 const INTERACTIVE = 'button, a, input, textarea, select';
@@ -38,17 +39,21 @@ const WindowWrapper = (WrappedComponent, windowKey) => {
     // the old one completely (including a pending hide on complete).
     const visibilityAnimation = createAnimationSlot();
     const zoomAnimation = createAnimationSlot();
+    const missionControlAnimation = createAnimationSlot();
 
     const Wrapped = (props) => {
         const windowRef = useRef(null);
         const dragRef = useRef(null);
         const wasVisibleRef = useRef(false);
         const lastMaximizedRef = useRef(false);
+        const inMissionControlRef = useRef(false);
 
         const windowState = useWindowStore((state) => state.windows[windowKey]);
         const focusWindow = useWindowStore((state) => state.focusWindow);
         const setBounds = useWindowStore((state) => state.setBounds);
         const toggleMaximize = useWindowStore((state) => state.toggleMaximize);
+        const missionControlTarget = useSystemStore((state) => state.missionControl?.layout[windowKey] ?? null);
+        const closeMissionControl = useSystemStore((state) => state.closeMissionControl);
 
         const { isOpen, isMinimized, isMaximized, zIndex, bounds } = windowState;
         const isVisible = isOpen && !isMinimized;
@@ -148,6 +153,36 @@ const WindowWrapper = (WrappedComponent, windowKey) => {
             }
         }, [bounds, isMaximized, isVisible]);
 
+        // Mission Control: slide into this window's grid slot, and back out.
+        useLayoutEffect(() => {
+            const element = windowRef.current;
+
+            if (!element) return;
+
+            if (missionControlTarget) {
+                inMissionControlRef.current = true;
+                visibilityAnimation.finish();
+                zoomAnimation.finish();
+
+                const { x, y, scale } = missionControlTarget;
+
+                missionControlAnimation.play(gsap.to(element, {
+                    transformOrigin: '0 0', x, y, scale, duration: 0.35, ease: 'power3.out',
+                }));
+            } else if (inMissionControlRef.current) {
+                inMissionControlRef.current = false;
+
+                missionControlAnimation.play(gsap.to(element, {
+                    x: 0,
+                    y: 0,
+                    scale: 1,
+                    duration: 0.3,
+                    ease: 'power3.out',
+                    onComplete: () => gsap.set(element, { clearProps: 'transform,transformOrigin' }),
+                }));
+            }
+        }, [missionControlTarget]);
+
         useGSAP(() => {
             const element = windowRef.current;
 
@@ -224,7 +259,13 @@ const WindowWrapper = (WrappedComponent, windowKey) => {
                 ref={windowRef}
                 className="absolute hidden flex-col"
                 style={{ zIndex }}
-                onPointerDown={() => focusWindow(windowKey)}
+                data-window
+                onPointerDown={() => {
+                    focusWindow(windowKey);
+
+                    // In Mission Control a click just picks this window.
+                    if (useSystemStore.getState().missionControl) closeMissionControl();
+                }}
             >
                 <WrappedComponent {...props} />
 

@@ -3,6 +3,7 @@
 // without initializing Firebase. Each windowed app's id must match the key
 // passed to WindowWrapper in its component file.
 // defaultBounds/minSize are px; the store clamps them to the screen.
+// `action` marks dock launchers that run something instead of opening a window.
 
 export const INITIAL_Z_INDEX = 1000;
 
@@ -44,6 +45,14 @@ export const APPS = [
         minSize: { w: 400, h: 360 },
     },
     {
+        id: 'missionControl',
+        title: 'Mission Control',
+        icon: '/images/mission-control.svg',
+        placement: ['dock'],
+        hasWindow: false,
+        action: 'missionControl',
+    },
+    {
         id: 'trash',
         title: 'Archive',
         icon: '/images/trash.png',
@@ -58,7 +67,13 @@ export const getApp = (id) => APPS.find((app) => app.id === id);
 
 export const dockApps = APPS
     .filter((app) => app.placement.includes('dock'))
-    .map((app) => ({ id: app.id, name: app.title, icon: app.icon, canOpen: hasWindow(app) }));
+    .map((app) => ({
+        id: app.id,
+        name: app.title,
+        icon: app.icon,
+        canOpen: hasWindow(app),
+        action: app.action ?? null,
+    }));
 
 export const desktopItems = APPS
     .filter((app) => app.placement.includes('desktop'))
