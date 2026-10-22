@@ -1,0 +1,271 @@
+# AGENTS.md - Portfolio Project Guidelines
+
+This document provides instructions for AI coding agents working on this codebase.
+
+## Project Overview
+
+A macOS-styled portfolio website built with React 19, Vite 7, and Tailwind CSS 4. Features include draggable windows, dock animations (GSAP), Firebase backend, and Zustand state management.
+
+## Tech Stack
+
+- **Framework**: React 19 with Vite 7
+- **Styling**: Tailwind CSS 4 (via `@tailwindcss/vite` plugin)
+- **State**: Zustand with Immer middleware
+- **Animations**: GSAP with `@gsap/react` and Draggable plugin
+- **Backend**: Firebase (Firestore, Auth, Storage)
+- **Routing**: React Router DOM 7
+- **Icons**: Lucide React
+
+---
+
+## Build / Lint / Test Commands
+
+```bash
+# Development server (http://localhost:5173)
+npm run dev
+
+# Production build (outputs to dist/)
+npm run build
+
+# Preview production build
+npm run preview
+
+# Lint all files
+npm run lint
+
+# Lint specific file
+npx eslint src/components/Dock.jsx
+
+# Lint specific directory
+npx eslint src/windows/
+
+# Unit tests (Vitest, pure logic only)
+npm test
+npm test -- src/store/window.test.js
+```
+
+---
+
+## Project Structure
+
+```
+src/
+├── components/     # Reusable UI components (Navbar, Dock, etc.)
+├── windows/        # Window components (Terminal, Finder, Contact, Resume)
+├── pages/          # Route pages (admin/Login, admin/Dashboard)
+├── store/          # Zustand stores (window.js, map.js)
+├── context/        # React Context (AuthContext.jsx)
+├── hoc/            # Higher-order components (WindowWrapper.jsx)
+├── constants/      # Static data and configuration (index.js)
+├── lib/            # External service configs (firebase.js)
+├── assets/         # Static assets
+└── index.css       # Global styles with Tailwind
+```
+
+---
+
+## Import Aliases
+
+Configured in `vite.config.js`:
+
+```javascript
+@components  → src/components
+@constants   → src/constants
+@store       → src/store
+@hoc         → src/hoc
+@windows     → src/windows
+```
+
+**Usage**:
+```javascript
+import { Navbar, Dock } from "@components"
+import { Terminal, Finder } from "@windows"
+import { dockApps } from "@constants"
+import useWindowStore from "@store/window"
+import WindowWrapper from "@hoc/WindowWrapper"
+```
+
+---
+
+## Code Style Guidelines
+
+### File Naming
+- **Components**: PascalCase (e.g., `Dock.jsx`, `WindowWrapper.jsx`)
+- **Stores**: camelCase (e.g., `window.js`, `map.js`)
+- **Barrel files**: `index.js` for re-exports
+
+### Component Structure
+```javascript
+// 1. React imports
+import { useState, useEffect, useCallback, useRef } from 'react';
+
+// 2. Third-party libraries
+import gsap from 'gsap';
+import { Tooltip } from 'react-tooltip';
+
+// 3. Local imports (use aliases when available)
+import { dockApps } from '@constants';
+import useWindowStore from '@store/window';
+
+// 4. Component definition (function declaration preferred)
+const ComponentName = () => {
+    // Hooks first
+    const [state, setState] = useState(null);
+    const ref = useRef(null);
+    
+    // Effects
+    useEffect(() => { /* ... */ }, []);
+    
+    // Handlers
+    const handleClick = () => { /* ... */ };
+    
+    // Render
+    return <div>...</div>;
+};
+
+export default ComponentName;
+```
+
+### Exports
+- **Named exports**: Use barrel files (`index.js`) for component directories
+- **Default exports**: Single component per file
+
+```javascript
+// src/components/index.js
+import Navbar from "./Navbar";
+import Dock from "./Dock";
+export { Navbar, Dock }
+
+// src/windows/index.js
+import Terminal from "./Terminal";
+import Finder from "./Finder";
+export { Terminal, Finder }
+```
+
+### State Management (Zustand)
+```javascript
+import { create } from 'zustand';
+import { immer } from 'zustand/middleware/immer';
+
+const useStore = create(
+  immer((set) => ({
+    data: null,
+    action: (payload) => set((state) => {
+      state.data = payload;
+    }),
+  }))
+);
+```
+
+### Higher-Order Components
+Used for window functionality (dragging, z-index management):
+```javascript
+const TerminalWindow = WindowWrapper(Terminal, 'terminal');
+export default TerminalWindow;
+```
+
+---
+
+## Styling Conventions
+
+### Tailwind CSS 4
+- Uses `@import "tailwindcss"` syntax
+- Custom utilities defined with `@utility` directive
+- Theme extended in `@theme` block
+
+### Custom Utilities (src/index.css)
+```css
+@utility flex-center    /* flex items-center justify-center */
+@utility col-center     /* flex flex-col items-center justify-center */
+@utility abs-center     /* absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 */
+```
+
+### Component IDs for Styling
+CSS selectors target component IDs: `#dock`, `#terminal`, `#finder`, `#contact`, etc.
+
+---
+
+## Error Handling Patterns
+
+### Async Operations
+```javascript
+const fetchData = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+        const result = await apiCall();
+        setData(result);
+    } catch (err) {
+        console.error('Error:', err);
+        setError('User-friendly error message');
+    } finally {
+        setLoading(false);
+    }
+};
+```
+
+### Loading States
+Use Lucide icons for loading/error states:
+```javascript
+import { Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
+
+{loading && <Loader2 className="animate-spin" />}
+{error && <AlertTriangle />}
+```
+
+---
+
+## Environment Variables
+
+Firebase config uses Vite's `import.meta.env`:
+```
+VITE_FIREBASE_API_KEY
+VITE_FIREBASE_AUTH_DOMAIN
+VITE_FIREBASE_PROJECT_ID
+VITE_FIREBASE_STORAGE_BUCKET
+VITE_FIREBASE_MESSAGING_SENDER_ID
+VITE_FIREBASE_APP_ID
+```
+
+---
+
+## ESLint Configuration
+
+- ECMAScript 2020+ features enabled
+- React Hooks rules enforced
+- React Refresh plugin for HMR
+- Unused vars allowed if capitalized or prefixed with underscore
+
+```javascript
+rules: {
+  'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }]
+}
+```
+
+---
+
+## Key Patterns
+
+### Window Management
+Windows are managed via Zustand store with open/close/focus actions:
+```javascript
+const { windows, openWindow, closeWindow, focusWindow } = useWindowStore();
+openWindow('terminal');
+closeWindow('finder');
+```
+
+### GSAP Animations
+Register plugins at app entry, use `useGSAP` hook for React integration:
+```javascript
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import { Draggable } from 'gsap/all';
+
+gsap.registerPlugin(Draggable);
+```
+
+### Firebase Integration
+Services exported from `src/lib/firebase.js`:
+```javascript
+import { db, auth, storage } from '../lib/firebase';
+```
