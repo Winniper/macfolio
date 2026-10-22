@@ -129,7 +129,7 @@ body {
   }
 
   #window-header {
-    @apply flex items-center justify-between px-4 py-3 rounded-t-lg bg-[#2d2d2d] border-b border-[#1a1a1a] select-none text-sm text-gray-400;
+    @apply flex items-center justify-between px-4 py-3 rounded-t-xl bg-[#2d2d2d] border-b border-[#1a1a1a] select-none text-sm text-gray-400;
   }
 
   #safari {
@@ -237,7 +237,7 @@ body {
   }
 
   #finder {
-    @apply shadow-2xl drop-shadow-2xl overflow-hidden rounded-xl;
+    @apply shadow-2xl drop-shadow-2xl rounded-xl; /* no overflow-hidden: clipping the section would clip its corner resize handles */
 
     .sidebar {
       @apply w-48 bg-[#252525] border-r border-[#1a1a1a] flex flex-col p-5 space-y-3;

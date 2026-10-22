@@ -2,7 +2,7 @@
 // window's left/top.
 
 export const MENU_BAR_HEIGHT = 40;
-export const DOCK_RESERVE = 96;
+export const DOCK_RESERVE = 120; // dock is ~114px tall at the 3xl breakpoint
 export const TITLE_BAR_HEIGHT = 44;
 export const MIN_VISIBLE = 80;
 

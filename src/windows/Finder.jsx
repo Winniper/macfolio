@@ -173,7 +173,7 @@ const Finder = () => {
                 <div></div>
             </div>
 
-            <div className="flex flex-1 min-h-0 overflow-hidden">
+            <div className="flex flex-1 min-h-0 overflow-hidden rounded-b-xl">
                 <div className="w-44 bg-[#252525] p-3 border-r border-[#1a1a1a]">
                     <div className="space-y-4">
                         <div>
