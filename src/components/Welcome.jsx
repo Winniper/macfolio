@@ -1,6 +1,7 @@
 import React, { useRef } from 'react'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
+import useSystemStore from '../store/system'
 
 const FONT_WEIGHTS = {
     subtitle: { min: 100, max: 400, default: 100 },
@@ -57,6 +58,22 @@ const setupTextHover = (container, text) => {
 const Welcome = () => {
     const titleRef = useRef(null)
     const subtitleRef = useRef(null)
+
+    const bootPhase = useSystemStore((state) => state.bootPhase)
+    const previousPhaseRef = useRef(bootPhase)
+
+    // Letters rise in when the visitor arrives at the desktop from the lock screen.
+    useGSAP(() => {
+        const entering = bootPhase === 'desktop' && previousPhaseRef.current !== 'desktop'
+        previousPhaseRef.current = bootPhase
+
+        if (!entering) return
+
+        const letters = [titleRef.current, subtitleRef.current]
+            .flatMap((element) => [...element.querySelectorAll('span')])
+
+        gsap.from(letters, { opacity: 0, y: 24, duration: 0.6, stagger: 0.02, ease: 'power3.out', delay: 0.15 })
+    }, { dependencies: [bootPhase] })
 
     useGSAP(() => {
         const titleCleanup = setupTextHover(titleRef.current, "title")

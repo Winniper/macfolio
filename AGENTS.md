@@ -260,6 +260,8 @@ Window components mark their header with `data-titlebar` and let their root fill
 
 Keyboard shortcuts must go through `src/lib/shortcuts.js` so each one is only claimed on platforms whose OS leaves it free.
 
+Anything that reacts to global keys or pointer position must check `isDesktopPhase(useSystemStore.getState())`, so it stays inert during the boot and lock screens.
+
 ### GSAP Animations
 Register plugins at app entry, use `useGSAP` hook for React integration:
 ```javascript

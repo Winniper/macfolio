@@ -167,7 +167,15 @@ const gallery = [
     },
 ];
 
+// Shown on the lock screen. Put a photo in public/images and set `avatar` to
+// its path (e.g. "/images/avatar.jpg"); until then the initials are shown.
+const profile = {
+    name: "Debaditya Barman",
+    avatar: null,
+};
+
 export {
+    profile,
     navLinks,
     navIcons,
     dockApps,

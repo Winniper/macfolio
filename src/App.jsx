@@ -11,6 +11,7 @@ import MissionControl from "@components/system/MissionControl"
 import AppSwitcher from "@components/system/AppSwitcher"
 import useSystemStore from "@store/system"
 import BootScreen from "@components/system/BootScreen"
+import LockScreen from "@components/system/LockScreen"
 
 gsap.registerPlugin(Draggable)
 
@@ -47,6 +48,7 @@ function App() {
       <AppSwitcher />
       <Analytics />
       {bootPhase === "booting" && <BootScreen />}
+      {bootPhase === "locked" && <LockScreen />}
     </main>
   )
 }
