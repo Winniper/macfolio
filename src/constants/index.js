@@ -1,4 +1,4 @@
-import { dockApps, desktopItems } from './apps';
+import { dockApps, desktopItems, getApp } from './apps';
 
 const navLinks = [
     {
@@ -177,6 +177,7 @@ export {
     photosLinks,
     gallery,
     desktopItems,
+    getApp,
 };
 
 const WORK_LOCATION = {

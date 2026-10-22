@@ -1,82 +1,91 @@
-import { useRef, useEffect } from 'react';
 import gsap from 'gsap';
 import { Tooltip } from 'react-tooltip';
 
-import { dockApps } from '../constants';
-import useWindowStore from '../store/window';
+import { dockApps, getApp } from '../constants';
 import { getDockAction } from '../lib/dock';
+import { toRect } from '../lib/bounds';
+import useWindowStore from '../store/window';
+
+const magnify = (event) => {
+    gsap.to(event.currentTarget, { scale: 1.2, y: -8, duration: 0.2, ease: 'power1.out' });
+};
+
+const settle = (event) => {
+    gsap.to(event.currentTarget, { scale: 1, y: 0, duration: 0.3, ease: 'power1.out' });
+};
 
 const Dock = () => {
-    const dockRef = useRef(null);
-    const { windows, openWindow, focusWindow } = useWindowStore();
+    const windows = useWindowStore((state) => state.windows);
+    const minimizedStack = useWindowStore((state) => state.minimizedStack);
+    const openWindow = useWindowStore((state) => state.openWindow);
+    const focusWindow = useWindowStore((state) => state.focusWindow);
+    const restoreWindow = useWindowStore((state) => state.restoreWindow);
 
-    useEffect(() => {
-        const dock = dockRef.current;
-        if (!dock) return;
+    const apps = dockApps.filter((app) => app.id !== 'trash');
+    const trash = dockApps.find((app) => app.id === 'trash');
 
-        const icons = dock.querySelectorAll('.dock-icon');
-
-        const handleMouseEnter = (e) => {
-            gsap.to(e.currentTarget, {
-                scale: 1.2,
-                y: -8,
-                duration: 0.2,
-                ease: 'power1.out',
-            });
-        };
-
-        const handleMouseLeave = (e) => {
-            gsap.to(e.currentTarget, {
-                scale: 1,
-                y: 0,
-                duration: 0.3,
-                ease: 'power1.out',
-            });
-        };
-
-        icons.forEach((icon) => {
-            icon.addEventListener('mouseenter', handleMouseEnter);
-            icon.addEventListener('mouseleave', handleMouseLeave);
-        });
-
-        return () => {
-            icons.forEach((icon) => {
-                icon.removeEventListener('mouseenter', handleMouseEnter);
-                icon.removeEventListener('mouseleave', handleMouseLeave);
-            });
-        };
-    }, []);
-
-    const handleAppClick = (app) => {
+    const handleAppClick = (app, event) => {
         const action = getDockAction(app.canOpen ? windows[app.id] : undefined);
+        const rect = toRect(event.currentTarget.getBoundingClientRect());
 
-        if (action === 'open') openWindow(app.id);
+        if (action === 'open') openWindow(app.id, null, rect);
+        if (action === 'restore') restoreWindow(app.id, rect);
         if (action === 'focus') focusWindow(app.id);
     };
 
+    const renderApp = (app) => (
+        <div key={app.id} className="relative flex justify-center">
+            <button
+                type="button"
+                className="dock-icon"
+                aria-label={app.name}
+                data-tooltip-id="dock-tooltip"
+                data-tooltip-content={app.name}
+                disabled={!app.canOpen}
+                onClick={(event) => handleAppClick(app, event)}
+                onMouseEnter={magnify}
+                onMouseLeave={settle}
+            >
+                <img
+                    src={app.icon}
+                    alt={app.name}
+                    loading="lazy"
+                    className={!app.canOpen ? 'opacity-60' : ''}
+                />
+            </button>
+            {windows[app.id]?.isOpen && <span className="dock-running" />}
+        </div>
+    );
+
     return (
         <section id="dock">
-            <div ref={dockRef} className="dock-container">
-                {dockApps.map((app) => (
-                    <div key={app.id} className="relative flex justify-center">
+            <div className="dock-container">
+                {apps.map(renderApp)}
+
+                <div className="dock-divider" />
+
+                {minimizedStack.map((id) => {
+                    const app = getApp(id);
+
+                    return (
                         <button
+                            key={id}
                             type="button"
-                            className="dock-icon"
-                            aria-label={app.name}
+                            className="dock-icon dock-minimized"
+                            aria-label={`Restore ${app.title}`}
+                            data-dock-minimized={id}
                             data-tooltip-id="dock-tooltip"
-                            data-tooltip-content={app.name}
-                            disabled={!app.canOpen}
-                            onClick={() => handleAppClick(app)}
+                            data-tooltip-content={app.title}
+                            onClick={(event) => restoreWindow(id, toRect(event.currentTarget.getBoundingClientRect()))}
+                            onMouseEnter={magnify}
+                            onMouseLeave={settle}
                         >
-                            <img
-                                src={app.icon}
-                                alt={app.name}
-                                loading="lazy"
-                                className={!app.canOpen ? 'opacity-60' : ''}
-                            />
+                            <img src={app.icon} alt={app.title} />
                         </button>
-                    </div>
-                ))}
+                    );
+                })}
+
+                {trash && renderApp(trash)}
             </div>
 
             <Tooltip

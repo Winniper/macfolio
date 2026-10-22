@@ -96,6 +96,18 @@ body {
         @apply object-cover object-center;
       }
     }
+
+    .dock-running {
+      @apply absolute -bottom-1 left-1/2 -translate-x-1/2 size-1 rounded-full bg-white/80;
+    }
+
+    .dock-divider {
+      @apply w-px self-stretch my-1 mx-1 bg-white/20;
+    }
+
+    .dock-minimized img {
+      @apply rounded-lg ring-1 ring-white/20;
+    }
   }
 
   #window-controls {

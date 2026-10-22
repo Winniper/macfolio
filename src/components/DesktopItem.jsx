@@ -3,6 +3,7 @@ import gsap from 'gsap';
 import Draggable from 'gsap/Draggable';
 
 import useWindowStore from '../store/window';
+import { toRect } from '../lib/bounds';
 
 gsap.registerPlugin(Draggable);
 
@@ -27,8 +28,8 @@ const DesktopItem = ({ item, style }) => {
         };
     }, []);
 
-    const handleDoubleClick = () => {
-        openWindow(item.id);
+    const handleOpen = (event) => {
+        openWindow(item.id, null, toRect(event.currentTarget.getBoundingClientRect()));
     };
 
     return (
@@ -36,7 +37,7 @@ const DesktopItem = ({ item, style }) => {
             ref={itemRef}
             className="absolute flex w-24 flex-col items-center justify-center gap-1 p-2 cursor-pointer hover:bg-white/20 rounded-md transition-colors select-none"
             style={style}
-            onClick={handleDoubleClick}
+            onClick={handleOpen}
         >
             <div className="flex h-14 w-14 items-center justify-center">
                 <img src={item.icon} alt={item.title} className="w-12 h-12 object-contain" />
