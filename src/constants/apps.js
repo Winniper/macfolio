@@ -45,6 +45,15 @@ export const APPS = [
         minSize: { w: 400, h: 360 },
     },
     {
+        id: 'safari',
+        title: 'Safari',
+        icon: '/images/safari.png',
+        placement: ['desktop'],
+        desktopPosition: { top: 260, left: 20 },
+        defaultBounds: { x: 200, y: 70, w: 1000, h: 680 },
+        minSize: { w: 480, h: 360 },
+    },
+    {
         id: 'missionControl',
         title: 'Mission Control',
         icon: '/images/mission-control.svg',

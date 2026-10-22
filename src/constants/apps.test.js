@@ -39,12 +39,13 @@ describe('app registry', () => {
         expect(desktopItems).toEqual([
             { id: 'finder', title: 'Projects', icon: '/images/folder.png', position: { top: 60, left: 20 } },
             { id: 'resume', title: 'Resume.pdf', icon: '/images/pdf.png', position: { top: 160, left: 20 } },
+            { id: 'safari', title: 'Safari', icon: '/images/safari.png', position: { top: 260, left: 20 } },
         ]);
     });
 
     it('builds a closed window entry for every windowed app only', () => {
         const config = buildWindowConfig();
-        expect(Object.keys(config).sort()).toEqual(['contact', 'finder', 'resume', 'terminal']);
+        expect(Object.keys(config).sort()).toEqual(['contact', 'finder', 'resume', 'safari', 'terminal']);
         expect(config.finder).toEqual({
             isOpen: false, zIndex: INITIAL_Z_INDEX, data: null,
             isMinimized: false, isMaximized: false, bounds: null, prevBounds: null, originRect: null,

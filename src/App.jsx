@@ -1,7 +1,7 @@
 import { useEffect } from "react"
 import { Navbar, Welcome, Dock } from "@components"
 import DesktopItem from "@components/DesktopItem"
-import { Terminal, Resume, Finder, Contact } from "@windows"
+import { Terminal, Resume, Finder, Contact, Browser } from "@windows"
 import { desktopItems } from "@constants"
 import gsap from "gsap"
 import { Draggable } from "gsap/all"
@@ -43,6 +43,7 @@ function App() {
       <Resume />
       <Finder />
       <Contact />
+      <Browser />
       <Dock />
       <MissionControl />
       <AppSwitcher />

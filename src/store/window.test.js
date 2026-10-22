@@ -91,13 +91,13 @@ describe('opening, focus and closing', () => {
 
     it('ignores unknown window ids', () => {
         const before = store();
-        store().openWindow('safari');
-        store().closeWindow('safari');
-        store().focusWindow('safari');
-        store().minimizeWindow('safari');
-        store().restoreWindow('safari');
-        store().toggleMaximize('safari');
-        store().setBounds('safari', { x: 0, y: 0, w: 1, h: 1 });
+        store().openWindow('photos');
+        store().closeWindow('photos');
+        store().focusWindow('photos');
+        store().minimizeWindow('photos');
+        store().restoreWindow('photos');
+        store().toggleMaximize('photos');
+        store().setBounds('photos', { x: 0, y: 0, w: 1, h: 1 });
         expect(store().windows).toEqual(before.windows);
         expect(store().nextZIndex).toBe(before.nextZIndex);
     });

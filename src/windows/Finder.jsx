@@ -16,6 +16,7 @@ import {
 import WindowWrapper from '../hoc/WindowWrapper';
 import WindowControls from '../components/WindowControl';
 import useProjects from '../hooks/useProjects';
+import useWindowStore from '../store/window';
 
 // Desktop level items
 const desktopItems = [
@@ -49,6 +50,7 @@ const Finder = () => {
     const [currentPath, setCurrentPath] = useState(['Desktop']);
     const [currentFolder, setCurrentFolder] = useState(null);
     const { projects, loading, error, retry } = useProjects();
+    const openWindow = useWindowStore((state) => state.openWindow);
 
     // Get current items based on folder level
     const getCurrentItems = () => {
@@ -103,7 +105,12 @@ const Finder = () => {
             }
             setSelectedItem(null);
         } else if (item.type === 'link' && item.url) {
-            window.open(item.url, '_blank', 'noopener,noreferrer');
+            if (item.id === 'website') {
+                openWindow('safari', { url: item.url, title: currentPath[currentPath.length - 1] });
+            } else {
+                // GitHub refuses to be framed, so it opens in a real browser tab.
+                window.open(item.url, '_blank', 'noopener,noreferrer');
+            }
         }
     };
 
