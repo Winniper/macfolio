@@ -435,3 +435,18 @@ body.mission-control-open [data-window] > * {
   font-size: 13px;
   color: white;
 }
+
+/* Boot and lock overlays sit above everything, including the app switcher. */
+.boot-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 200000;
+  display: grid;
+  place-items: center;
+  background: #000;
+  cursor: default;
+}
+.boot-screen svg {
+  width: min(560px, 70vw);
+  height: auto;
+}

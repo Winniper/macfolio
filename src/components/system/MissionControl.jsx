@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { getApp } from '../../constants/apps';
 import { shouldOpenFromHotCorner } from '../../lib/hotCorner';
 import { getPlatform, isMacPlatform, isMissionControlKey } from '../../lib/shortcuts';
-import useSystemStore from '../../store/system';
+import useSystemStore, { isDesktopPhase } from '../../store/system';
 
 const isMac = isMacPlatform(getPlatform());
 
@@ -18,6 +18,8 @@ const MissionControl = () => {
 
     useEffect(() => {
         const handleKeyDown = (event) => {
+            if (!isDesktopPhase(useSystemStore.getState())) return;
+
             if (isMissionControlKey(event, isMac)) {
                 event.preventDefault();
                 toggleMissionControl();
@@ -43,7 +45,7 @@ const MissionControl = () => {
     }, [missionControl]);
 
     const handleHotCorner = (event) => {
-        if (!shouldOpenFromHotCorner(event)) return;
+        if (!shouldOpenFromHotCorner(event) || !isDesktopPhase(useSystemStore.getState())) return;
         if (!useSystemStore.getState().missionControl) openMissionControl();
     };
 

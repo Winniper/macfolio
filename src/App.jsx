@@ -9,11 +9,14 @@ import { Analytics } from "@vercel/analytics/react"
 import useWindowStore from "@store/window"
 import MissionControl from "@components/system/MissionControl"
 import AppSwitcher from "@components/system/AppSwitcher"
+import useSystemStore from "@store/system"
+import BootScreen from "@components/system/BootScreen"
 
 gsap.registerPlugin(Draggable)
 
 function App() {
   const fitToViewport = useWindowStore((state) => state.fitToViewport)
+  const bootPhase = useSystemStore((state) => state.bootPhase)
 
   useEffect(() => {
     window.addEventListener("resize", fitToViewport)
@@ -43,6 +46,7 @@ function App() {
       <MissionControl />
       <AppSwitcher />
       <Analytics />
+      {bootPhase === "booting" && <BootScreen />}
     </main>
   )
 }

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { getApp } from '../../constants/apps';
 import { getPlatform, isMacPlatform } from '../../lib/shortcuts';
 import { switcherOrder, switcherReducer } from '../../lib/switcher';
-import useSystemStore from '../../store/system';
+import useSystemStore, { isDesktopPhase } from '../../store/system';
 import useWindowStore from '../../store/window';
 
 const isMac = isMacPlatform(getPlatform());
@@ -32,15 +32,23 @@ const AppSwitcher = () => {
             if (commit) useSystemStore.getState().switchToApp(commit);
         };
 
-        const handleKeyDown = (event) => dispatch({
-            type: 'keydown',
-            key: event.key,
-            code: event.code,
-            altKey: event.altKey,
-            ctrlKey: event.ctrlKey,
-            shiftKey: event.shiftKey,
-        }, event);
-        const handleKeyUp = (event) => dispatch({ type: 'keyup', key: event.key }, event);
+        const handleKeyDown = (event) => {
+            if (!isDesktopPhase(useSystemStore.getState())) return;
+
+            dispatch({
+                type: 'keydown',
+                key: event.key,
+                code: event.code,
+                altKey: event.altKey,
+                ctrlKey: event.ctrlKey,
+                shiftKey: event.shiftKey,
+            }, event);
+        };
+        const handleKeyUp = (event) => {
+            if (!isDesktopPhase(useSystemStore.getState())) return;
+
+            dispatch({ type: 'keyup', key: event.key }, event);
+        };
         const handleBlur = () => dispatch({ type: 'blur' });
 
         window.addEventListener('keydown', handleKeyDown, true);
