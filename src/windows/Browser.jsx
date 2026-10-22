@@ -44,10 +44,16 @@ const Browser = () => {
     const submitAddress = (event) => {
         event.preventDefault();
 
-        const url = normalizeAddress(draft ?? '');
+        const text = draft ?? '';
+        const input = event.currentTarget.querySelector('input');
 
-        open(url ? pageEntry(url) : errorEntry(draft ?? ''));
-        event.currentTarget.querySelector('input')?.blur();
+        // An empty address bar is not an error: just leave it.
+        if (text.trim() !== '') {
+            const url = normalizeAddress(text);
+
+            open(url ? pageEntry(url) : errorEntry(text));
+        }
+        input?.blur();
     };
 
     return (
@@ -153,7 +159,7 @@ const Browser = () => {
                     );
                 })}
 
-                {!entry.url && !entry.error && (
+                {!entry.url && entry.error === undefined && (
                     <FavoritesPage onOpen={(favorite) => open(pageEntry(favorite.url, favorite.title))} />
                 )}
                 {!entry.url && entry.error !== undefined && <CantOpenPage input={entry.error} />}

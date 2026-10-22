@@ -195,6 +195,8 @@ const WindowWrapper = (WrappedComponent, windowKey) => {
                 // The store owns z-index; Draggable's default boost would overwrite it.
                 zIndexBoost: false,
                 trigger: titlebar ?? element,
+                // Inputs/buttons in a title bar (Safari's address bar) must stay usable.
+                dragClickables: false,
                 onDragStart: () => setInteracting(true),
                 onDragEnd() {
                     setInteracting(false);
