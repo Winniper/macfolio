@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import useSystemStore, { createInitialSystemState } from './system';
+import useSystemStore, { createInitialSystemState, isDesktopPhase } from './system';
 import useWindowStore, { createInitialWindowState } from './window';
 
 const system = () => useSystemStore.getState();
@@ -65,5 +65,73 @@ describe('switchToApp', () => {
         system().switchToApp('finder');
         expect(system().missionControl).toBeNull();
         expect(windows().focusedId).toBe('finder');
+    });
+});
+
+describe('boot phase', () => {
+    const memoryStorage = () => {
+        const data = {};
+        return {
+            getItem: (key) => (key in data ? data[key] : null),
+            setItem: (key, value) => { data[key] = String(value); },
+        };
+    };
+
+    afterEach(() => {
+        delete globalThis.sessionStorage;
+    });
+
+    it('boots on a first visit and skips once the boot was seen in this tab', () => {
+        globalThis.sessionStorage = memoryStorage();
+        expect(createInitialSystemState().bootPhase).toBe('booting');
+        globalThis.sessionStorage.setItem('portfolio:bootSeen', '1');
+        expect(createInitialSystemState().bootPhase).toBe('desktop');
+    });
+
+    it('goes from booting to locked, and only from booting', () => {
+        useSystemStore.setState({ bootPhase: 'booting' });
+        system().finishBoot();
+        expect(system().bootPhase).toBe('locked');
+        useSystemStore.setState({ bootPhase: 'desktop' });
+        system().finishBoot();
+        expect(system().bootPhase).toBe('desktop');
+    });
+
+    it('unlocks to the desktop and remembers the boot was seen', () => {
+        globalThis.sessionStorage = memoryStorage();
+        useSystemStore.setState({ bootPhase: 'locked' });
+        system().unlock();
+        expect(system().bootPhase).toBe('desktop');
+        expect(globalThis.sessionStorage.getItem('portfolio:bootSeen')).toBe('1');
+    });
+
+    it('only unlocks from the lock screen', () => {
+        useSystemStore.setState({ bootPhase: 'booting' });
+        system().unlock();
+        expect(system().bootPhase).toBe('booting');
+    });
+
+    it('locks and restarts without touching open windows, closing Mission Control', () => {
+        windows().openWindow('finder');
+        windows().setBounds('finder', { x: 300, y: 200, w: 600, h: 400 });
+        const before = windows().windows.finder;
+        useSystemStore.setState({ bootPhase: 'desktop' });
+        system().openMissionControl();
+
+        system().lock();
+        expect(system().bootPhase).toBe('locked');
+        expect(system().missionControl).toBeNull();
+
+        system().openMissionControl();
+        system().restart();
+        expect(system().bootPhase).toBe('booting');
+        expect(system().missionControl).toBeNull();
+        expect(windows().windows.finder).toEqual(before);
+    });
+
+    it('accepts desktop shortcuts only on the desktop', () => {
+        expect(isDesktopPhase({ bootPhase: 'desktop' })).toBe(true);
+        expect(isDesktopPhase({ bootPhase: 'locked' })).toBe(false);
+        expect(isDesktopPhase({ bootPhase: 'booting' })).toBe(false);
     });
 });

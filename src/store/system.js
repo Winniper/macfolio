@@ -1,14 +1,19 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { getViewport } from '../lib/bounds';
+import { initialBootPhase, isSmallScreen, markBootSeen, readBootSeen } from '../lib/boot';
 import { missionControlLayout } from '../lib/missionControl';
 import useWindowStore from './window';
 
-// OS-level state that isn't about a single window. Later phases add boot
-// phase, Spotlight, Control Center and audio here.
+// OS-level state that isn't about a single window: boot phase and Mission
+// Control now; Spotlight, Control Center and audio in later phases.
 export const createInitialSystemState = () => ({
+  bootPhase: initialBootPhase({ bootSeen: readBootSeen(), smallScreen: isSmallScreen() }),
   missionControl: null,
 });
+
+// Desktop shortcuts (switcher, Mission Control, hot corner) only apply here.
+export const isDesktopPhase = (state) => state.bootPhase === 'desktop';
 
 const visibleWindowEntries = () =>
   Object.entries(useWindowStore.getState().windows)
@@ -45,6 +50,34 @@ const useSystemStore = create(
       if (windows[key]?.isMinimized) restoreWindow(key);
       else focusWindow(key);
     },
+
+    finishBoot: () =>
+      set((state) => {
+        if (state.bootPhase === 'booting') state.bootPhase = 'locked';
+      }),
+
+    unlock: () => {
+      if (get().bootPhase !== 'locked') return;
+
+      markBootSeen();
+      set((state) => {
+        state.bootPhase = 'desktop';
+      });
+    },
+
+    // Open windows are untouched; Mission Control is left so the overlay
+    // isn't covering a stale grid when the desktop comes back.
+    lock: () =>
+      set((state) => {
+        state.missionControl = null;
+        state.bootPhase = 'locked';
+      }),
+
+    restart: () =>
+      set((state) => {
+        state.missionControl = null;
+        state.bootPhase = 'booting';
+      }),
   }))
 );
 
