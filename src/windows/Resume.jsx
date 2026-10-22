@@ -30,9 +30,9 @@ const Resume = () => {
     }, [fetchResumeUrl]);
 
     return (
-        <div className="flex flex-col rounded-2xl overflow-hidden shadow-2xl w-[min(700px,90vw)] h-[min(600px,70vh)]">
+        <div className="flex flex-col rounded-2xl overflow-hidden shadow-2xl flex-1 min-h-0 w-full">
             {/* Dark macOS-style header */}
-            <div className="flex items-center justify-between px-4 py-3 bg-[#2d2d2d] border-b border-[#1a1a1a] relative">
+            <div className="flex items-center justify-between px-4 py-3 bg-[#2d2d2d] border-b border-[#1a1a1a] relative" data-titlebar>
                 <WindowControls target="resume" />
                 <span className="text-[13px] font-medium text-gray-300 absolute left-1/2 -translate-x-1/2">Resume.pdf</span>
                 {resumeUrl && !loading && !error && (
@@ -48,7 +48,7 @@ const Resume = () => {
             </div>
 
             {/* PDF Preview area */}
-            <div className="flex-1 w-full bg-white overflow-hidden">
+            <div className="flex-1 min-h-0 w-full bg-white overflow-hidden">
                 {loading ? (
                     <div className="flex flex-col items-center justify-center h-full gap-3 bg-gray-100">
                         <Loader2 size={40} className="animate-spin text-blue-500" />

@@ -256,6 +256,8 @@ closeWindow('finder');
 
 Apps are declared once in `src/constants/apps.js`; dock and desktop icons are derived from it. Clicking a dock icon opens a closed window or focuses an open one — it never closes it.
 
+Window components mark their header with `data-titlebar` and let their root fill the window (`flex-1 min-h-0 w-full`); default and minimum sizes live in the registry (`defaultBounds`, `minSize`), not in the markup.
+
 ### GSAP Animations
 Register plugins at app entry, use `useGSAP` hook for React integration:
 ```javascript

@@ -31,10 +31,12 @@ A macOS-desktop-simulation portfolio: React 19 + Vite 7 + Tailwind 4, GSAP for d
 The central abstraction. Understanding it requires `src/constants/apps.js` (the registry), `src/store/window.js`, and `src/hoc/WindowWrapper.jsx` together.
 
 - The store seed comes from `buildWindowConfig()` in `apps.js`: a map of `windowKey → { isOpen, zIndex, data }`.
-- `WindowWrapper(Component, windowKey)` wraps a window component in a `<section id={windowKey}>` that is absolutely positioned, GSAP-`Draggable`, toggles `display` on `isOpen`, and calls `focusWindow(key)` on press.
+- `WindowWrapper(Component, windowKey)` wraps a window component in a `<section id={windowKey}>` positioned and sized by the store's `bounds` (inline `left/top/width/height`). It drags by the element marked `data-titlebar` (GSAP Draggable, `type: 'top,left'`, so transforms stay free for animations), double-click on that element zooms, eight `.window-resize` handles resize, and any press focuses. It throws at import if `windowKey` isn't in the registry.
+- **Window components must** put `data-titlebar` on their header and make their root fill the section (`flex-1 min-h-0 w-full`). Fixed widths/heights in window markup break resize and zoom — sizes live in the registry's `defaultBounds`/`minSize`.
+- Geometry rules (min size, stay on screen, maximize area between menu bar and dock) are pure functions in `src/lib/bounds.js`; the store applies them, and `App.jsx` re-fits windows on browser resize.
 - `App.jsx` renders **every** window component unconditionally; the store decides what is visible. There is no mounting/unmounting, so window components keep their local state across close/reopen.
 - Focus is a monotonically increasing `nextZIndex` counter — z-index only ever goes up, never gets compacted.
-- `openWindow(key, data)` accepts an optional payload stored on the window; `closeWindow` clears it.
+- `openWindow(key, data, originRect)` accepts an optional payload and the launching icon's rect (for the open animation); `closeWindow` clears the payload but keeps `bounds` and zoom state, so a reopened window comes back where it was. `minimizeWindow`/`restoreWindow` move windows in and out of `minimizedStack` (rendered as dock tiles).
 - The store tracks `focusedId`; closing the focused window hands focus to the next-topmost open one.
 
 **`src/constants/apps.js` is the app registry** — pure data, no component imports (so the store and tests load it without Firebase). Dock items, desktop icons and the store seed are all derived from it; `placement` lists where an app's icon appears (`'dock'`, `'desktop'`), and `hasWindow: false` marks launchers like Archive. Adding a window means: a registry entry, a component ending in `WindowWrapper(Comp, '<same id>')`, its barrel export in `src/windows/index.js`, a render in `App.jsx`, and `#id` CSS in `src/index.css` if it needs custom styling. New apps go on the desktop, not the dock.

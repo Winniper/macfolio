@@ -153,7 +153,7 @@ const Finder = () => {
 
     return (
         <>
-            <div id="window-header">
+            <div id="window-header" data-titlebar>
                 <WindowControls target="finder" />
                 <div className="flex items-center gap-2">
                     <button
@@ -173,7 +173,7 @@ const Finder = () => {
                 <div></div>
             </div>
 
-            <div className="flex overflow-hidden h-[min(400px,60vh)]">
+            <div className="flex flex-1 min-h-0 overflow-hidden">
                 <div className="w-44 bg-[#252525] p-3 border-r border-[#1a1a1a]">
                     <div className="space-y-4">
                         <div>

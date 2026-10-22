@@ -33,16 +33,16 @@ const Terminal = () => {
     }, [fetchSkills]);
 
     return (
-        <div className="flex flex-col rounded-xl overflow-hidden shadow-2xl w-[min(480px,90vw)]">
+        <div className="flex flex-col rounded-xl overflow-hidden shadow-2xl flex-1 min-h-0 w-full">
             {/* macOS Terminal header - solid dark gray */}
-            <div className="flex items-center justify-between px-4 py-3 bg-[#3d3d3d] border-b border-[#2a2a2a]">
+            <div className="flex items-center justify-between px-4 py-3 bg-[#3d3d3d] border-b border-[#2a2a2a]" data-titlebar>
                 <WindowControls target="terminal" />
                 <span className="text-[13px] font-medium text-gray-300">Tech Stack</span>
                 <div className="w-[68px]"></div>
             </div>
 
             {/* Terminal body - solid black */}
-            <div className="bg-[#1e1e1e] px-6 py-5 font-mono text-sm min-h-[200px]">
+            <div className="bg-[#1e1e1e] px-6 py-5 font-mono text-sm flex-1 min-h-0 overflow-auto">
                 {/* Command prompt */}
                 <div className="flex items-center gap-2 mb-6 text-gray-300">
                     <span className="text-purple-400">@Debaditya</span>

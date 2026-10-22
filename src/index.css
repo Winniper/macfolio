@@ -101,16 +101,30 @@ body {
   #window-controls {
     @apply flex gap-2;
 
+    button {
+      @apply size-3.5 rounded-full flex-center cursor-default;
+
+      svg {
+        @apply size-2.5 opacity-0 transition-opacity;
+        color: rgb(0 0 0 / 0.6);
+        stroke-width: 3;
+      }
+    }
+
+    &:hover svg {
+      @apply opacity-100;
+    }
+
     .close {
-      @apply size-3.5 rounded-full bg-[#ff6157] cursor-pointer;
+      @apply bg-[#ff6157];
     }
 
     .minimize {
-      @apply size-3.5 rounded-full bg-[#ffc030];
+      @apply bg-[#ffc030];
     }
 
     .maximize {
-      @apply size-3.5 rounded-full bg-[#2acb42];
+      @apply bg-[#2acb42];
     }
   }
 
@@ -160,14 +174,6 @@ body {
         }
       }
     }
-  }
-
-  #terminal {
-    @apply absolute top-24 left-[5%];
-  }
-
-  #contact {
-    @apply absolute top-40 left-[35%];
   }
 
   #photos {
@@ -230,12 +236,8 @@ body {
     }
   }
 
-  #resume {
-    @apply absolute top-16 left-[55%];
-  }
-
   #finder {
-    @apply absolute left-[10%] top-20 shadow-2xl drop-shadow-2xl overflow-hidden rounded-xl max-w-[90vw];
+    @apply shadow-2xl drop-shadow-2xl overflow-hidden rounded-xl;
 
     .sidebar {
       @apply w-48 bg-[#252525] border-r border-[#1a1a1a] flex flex-col p-5 space-y-3;
@@ -321,4 +323,26 @@ body {
       }
     }
   }
+}
+
+/* Window edge/corner resize handles (rendered by WindowWrapper). */
+.window-resize {
+  position: absolute;
+  z-index: 10;
+}
+.window-resize-n { top: 0; left: 12px; right: 12px; height: 5px; cursor: ns-resize; }
+.window-resize-s { bottom: 0; left: 12px; right: 12px; height: 5px; cursor: ns-resize; }
+.window-resize-e { right: 0; top: 12px; bottom: 12px; width: 5px; cursor: ew-resize; }
+.window-resize-w { left: 0; top: 12px; bottom: 12px; width: 5px; cursor: ew-resize; }
+.window-resize-ne { top: 0; right: 0; width: 12px; height: 12px; cursor: nesw-resize; }
+.window-resize-sw { bottom: 0; left: 0; width: 12px; height: 12px; cursor: nesw-resize; }
+.window-resize-nw { top: 0; left: 0; width: 12px; height: 12px; cursor: nwse-resize; }
+.window-resize-se { bottom: 0; right: 0; width: 12px; height: 12px; cursor: nwse-resize; }
+
+/* During a window drag/resize, iframes must not capture the pointer. */
+body.window-interacting {
+  user-select: none;
+}
+body.window-interacting iframe {
+  pointer-events: none;
 }

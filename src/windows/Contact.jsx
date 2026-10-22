@@ -29,16 +29,16 @@ const Contact = () => {
     ];
 
     return (
-        <div className="flex flex-col rounded-xl overflow-hidden shadow-2xl bg-[#1e1e1e] w-[min(600px,90vw)] h-[min(350px,60vh)]">
+        <div className="flex flex-col rounded-xl overflow-hidden shadow-2xl bg-[#1e1e1e] flex-1 min-h-0 w-full">
             {/* Window Header */}
-            <div className="flex items-center justify-between px-4 py-3 bg-[#2d2d2d] border-b border-[#1a1a1a]">
+            <div className="flex items-center justify-between px-4 py-3 bg-[#2d2d2d] border-b border-[#1a1a1a]" data-titlebar>
                 <WindowControls target="contact" />
                 <span className="text-[13px] font-medium text-gray-400">Contact Me</span>
                 <div className="w-[52px]"></div> {/* Spacer for alignment */}
             </div>
 
             {/* Content Body */}
-            <div className="flex flex-col p-8 text-white h-full relative">
+            <div className="flex flex-col p-8 text-white flex-1 min-h-0 overflow-auto relative">
 
                 {/* Profile Section */}
                 <div className="mb-6">
