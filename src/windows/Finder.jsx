@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
     AppWindow,
     Cloud,
@@ -13,11 +13,9 @@ import {
     AlertTriangle,
     RefreshCw,
 } from 'lucide-react';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-
 import WindowWrapper from '../hoc/WindowWrapper';
 import WindowControls from '../components/WindowControl';
+import useProjects from '../hooks/useProjects';
 
 // Desktop level items
 const desktopItems = [
@@ -50,33 +48,7 @@ const Finder = () => {
     const [selectedItem, setSelectedItem] = useState(null);
     const [currentPath, setCurrentPath] = useState(['Desktop']);
     const [currentFolder, setCurrentFolder] = useState(null);
-    const [projects, setProjects] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    // Fetch projects from Firestore
-    const fetchProjects = useCallback(async () => {
-        setError(null);
-        setLoading(true);
-        try {
-            const q = query(collection(db, 'projects'), orderBy('order', 'asc'));
-            const snapshot = await getDocs(q);
-            const projectsList = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-            setProjects(projectsList);
-        } catch (err) {
-            console.error('Error fetching projects:', err);
-            setError('Unable to load projects');
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchProjects();
-    }, [fetchProjects]);
+    const { projects, loading, error, retry } = useProjects();
 
     // Get current items based on folder level
     const getCurrentItems = () => {
@@ -227,7 +199,7 @@ const Finder = () => {
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    fetchProjects();
+                                    retry();
                                 }}
                                 className="flex items-center gap-2 px-4 py-2 bg-[#333] hover:bg-[#444] text-gray-300 rounded-md transition-colors"
                             >

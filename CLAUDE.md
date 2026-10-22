@@ -50,7 +50,7 @@ Firestore collections and Storage paths are hardcoded at each call site rather t
 
 | Path | Read by | Written by |
 |---|---|---|
-| `projects` collection (ordered by `order` asc) | `windows/Finder.jsx` | `components/admin/ProjectsManager.jsx` |
+| `projects` collection (ordered by `order` asc) | `lib/projectsApi.js` → `store/projects.js` (shared by Finder and Safari via `hooks/useProjects.js`) | `components/admin/ProjectsManager.jsx` |
 | `skills` collection | `windows/Terminal.jsx` | `components/admin/SkillsManager.jsx` |
 | Storage `resume/resume.pdf` | `windows/Resume.jsx` | `components/admin/ResumeUploader.jsx` |
 
