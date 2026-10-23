@@ -10,6 +10,7 @@ import useWindowStore from "@store/window"
 import MissionControl from "@components/system/MissionControl"
 import AppSwitcher from "@components/system/AppSwitcher"
 import useSystemStore from "@store/system"
+import DesktopContextMenu from "@components/system/DesktopContextMenu"
 import BootScreen from "@components/system/BootScreen"
 import LockScreen from "@components/system/LockScreen"
 
@@ -48,6 +49,7 @@ function App() {
       <Dock />
       <MissionControl />
       <AppSwitcher />
+      <DesktopContextMenu />
       <Analytics />
       {/* Lock screen sits under the boot layer so the boot fades into it. */}
       {(bootPhase === "booting" || bootPhase === "locked") && <LockScreen />}

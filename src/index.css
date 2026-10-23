@@ -845,3 +845,9 @@ nav {
 .about-actions button:hover {
   background: #4a4a4a;
 }
+
+.context-menu {
+  position: fixed;
+  top: auto;
+  z-index: 150000;
+}
