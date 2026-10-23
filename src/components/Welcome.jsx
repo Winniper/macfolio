@@ -62,6 +62,7 @@ const Welcome = () => {
 
     const bootPhase = useSystemStore((state) => state.bootPhase)
     const previousPhaseRef = useRef(bootPhase)
+    const entranceRef = useRef(null)
 
     // Letters stay hidden until the visitor arrives at the desktop, then rise
     // in. A load that starts on the desktop (refresh, small screens) shows them
@@ -77,14 +78,15 @@ const Welcome = () => {
 
         if (bootPhase !== 'desktop') {
             // Restart/Lock can come mid-entrance: stop it so the letters really hide.
-            gsap.killTweensOf(letters)
+            // Kill the tween itself; gsap.killTweensOf misses this staggered one.
+            entranceRef.current?.kill()
             gsap.set(letters, { opacity: 0, y: offset })
             return
         }
 
         if (!entering) return
 
-        gsap.to(letters, {
+        entranceRef.current = gsap.to(letters, {
             opacity: 1,
             y: 0,
             duration: reduced ? 0.3 : 0.6,
