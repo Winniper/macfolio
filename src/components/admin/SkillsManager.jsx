@@ -5,15 +5,18 @@ import { fetchSkills as loadSkills, createSkill, updateSkill, deleteSkill } from
 const SkillsManager = () => {
     const [skills, setSkills] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [editing, setEditing] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState({ category: '', items: '' });
 
     const fetchSkills = async () => {
+        setError(null);
         try {
             setSkills(await loadSkills());
         } catch (error) {
             console.error('Error fetching skills:', error);
+            setError('Could not load skills.');
         } finally {
             setLoading(false);
         }
@@ -25,6 +28,7 @@ const SkillsManager = () => {
 
     const handleAdd = async () => {
         if (!formData.category || !formData.items) return;
+        setError(null);
         try {
             await createSkill(formData, skills.length);
             setFormData({ category: '', items: '' });
@@ -32,10 +36,12 @@ const SkillsManager = () => {
             fetchSkills();
         } catch (error) {
             console.error('Error adding skill:', error);
+            setError('Could not save — check that you are signed in as the admin.');
         }
     };
 
     const handleUpdate = async (id) => {
+        setError(null);
         try {
             await updateSkill(id, formData);
             setEditing(null);
@@ -43,16 +49,19 @@ const SkillsManager = () => {
             fetchSkills();
         } catch (error) {
             console.error('Error updating skill:', error);
+            setError('Could not save — check that you are signed in as the admin.');
         }
     };
 
     const handleDelete = async (id) => {
         if (!confirm('Are you sure you want to delete this skill category?')) return;
+        setError(null);
         try {
             await deleteSkill(id);
             fetchSkills();
         } catch (error) {
             console.error('Error deleting skill:', error);
+            setError('Could not save — check that you are signed in as the admin.');
         }
     };
 
@@ -80,6 +89,8 @@ const SkillsManager = () => {
                     Add Category
                 </button>
             </div>
+
+            {error && <p className="text-red-400 text-sm">{error}</p>}
 
             {/* Add Form */}
             {showForm && (

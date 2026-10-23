@@ -5,15 +5,18 @@ import { fetchProjects as loadProjects, createProject, updateProject, deleteProj
 const ProjectsManager = () => {
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [editing, setEditing] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState({ title: '', github: '', website: '' });
 
     const fetchProjects = async () => {
+        setError(null);
         try {
             setProjects(await loadProjects());
         } catch (error) {
             console.error('Error fetching projects:', error);
+            setError('Could not load projects.');
         } finally {
             setLoading(false);
         }
@@ -25,6 +28,7 @@ const ProjectsManager = () => {
 
     const handleAdd = async () => {
         if (!formData.title) return;
+        setError(null);
         try {
             await createProject(formData, projects.length);
             setFormData({ title: '', github: '', website: '' });
@@ -32,10 +36,12 @@ const ProjectsManager = () => {
             fetchProjects();
         } catch (error) {
             console.error('Error adding project:', error);
+            setError('Could not save — check that you are signed in as the admin.');
         }
     };
 
     const handleUpdate = async (id) => {
+        setError(null);
         try {
             await updateProject(id, formData);
             setEditing(null);
@@ -43,22 +49,25 @@ const ProjectsManager = () => {
             fetchProjects();
         } catch (error) {
             console.error('Error updating project:', error);
+            setError('Could not save — check that you are signed in as the admin.');
         }
     };
 
     const handleDelete = async (id) => {
         if (!confirm('Are you sure you want to delete this project?')) return;
+        setError(null);
         try {
             await deleteProject(id);
             fetchProjects();
         } catch (error) {
             console.error('Error deleting project:', error);
+            setError('Could not save — check that you are signed in as the admin.');
         }
     };
 
     const startEdit = (project) => {
         setEditing(project.id);
-        setFormData({ title: project.title, github: project.github, website: project.website });
+        setFormData({ title: project.title, github: project.github ?? '', website: project.website ?? '' });
     };
 
     if (loading) {
@@ -77,6 +86,8 @@ const ProjectsManager = () => {
                     Add Project
                 </button>
             </div>
+
+            {error && <p className="text-red-400 text-sm">{error}</p>}
 
             {/* Add Form */}
             {showForm && (

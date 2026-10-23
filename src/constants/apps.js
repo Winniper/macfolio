@@ -1,6 +1,6 @@
 // Single source of truth for every app on the desktop.
 // Pure data only — no component imports, so the store and tests can load it
-// without initializing Firebase. Each windowed app's id must match the key
+// without initializing the backend. Each windowed app's id must match the key
 // passed to WindowWrapper in its component file.
 // defaultBounds/minSize are px; the store clamps them to the screen.
 // `action` marks dock launchers that run something instead of opening a window; `keywords` feed Spotlight.

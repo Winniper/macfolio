@@ -1,43 +1,65 @@
-import React, { useState, useRef } from 'react';
-import { Upload, FileText, Trash2, Check } from 'lucide-react';
-import { replaceResume } from '../../lib/resumeApi';
+import React, { useState, useEffect, useRef } from 'react';
+import { Upload, FileText, Check } from 'lucide-react';
+import { fetchCurrentResume, replaceResume } from '../../lib/resumeApi';
+import { validateResume } from '../../lib/resume';
+
+const uploadedOn = (name) => {
+    const stamp = name.match(/\d+/)?.[0];
+    return stamp ? new Date(Number(stamp)).toLocaleString() : null;
+};
 
 const ResumeUploader = () => {
     const [uploading, setUploading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [currentResume, setCurrentResume] = useState(null);
-    const [success, setSuccess] = useState(false);
+    const [success, setSuccess] = useState(null);
+    const [error, setError] = useState(null);
     const fileInputRef = useRef(null);
 
+    useEffect(() => {
+        let cancelled = false;
+        fetchCurrentResume()
+            .then((resume) => { if (!cancelled) setCurrentResume(resume); })
+            .catch((err) => {
+                console.error('Error loading resume:', err);
+                if (!cancelled) setError('Could not load the current resume.');
+            })
+            .finally(() => { if (!cancelled) setLoading(false); });
+        return () => { cancelled = true; };
+    }, []);
+
     const handleUpload = async (e) => {
-        const file = e.target.files[0];
+        const input = e.target;
+        const file = input.files[0];
         if (!file) return;
 
-        if (file.type !== 'application/pdf') {
-            alert('Please upload a PDF file');
+        setSuccess(null);
+        setError(null);
+
+        const problem = validateResume(file);
+        if (problem) {
+            setError(problem);
+            input.value = '';
             return;
         }
 
         setUploading(true);
-        setSuccess(false);
 
         try {
-            // Uploads the new file, then removes every older one
             const resume = await replaceResume(file);
-
-            setCurrentResume({
-                name: file.name,
-                url: resume.url,
-                uploadedAt: new Date().toISOString()
-            });
-            setSuccess(true);
+            setCurrentResume(resume);
+            setSuccess(resume.cleanupFailed
+                ? "Uploaded — but an older copy couldn't be removed. Try uploading again."
+                : 'Resume uploaded successfully!');
 
             // Reset success message after 3 seconds
-            setTimeout(() => setSuccess(false), 3000);
-        } catch (error) {
-            console.error('Error uploading resume:', error);
-            alert('Failed to upload resume. Please try again.');
+            setTimeout(() => setSuccess(null), 3000);
+        } catch (err) {
+            console.error('Error uploading resume:', err);
+            setError('Upload failed — your previous resume is unchanged.');
         } finally {
             setUploading(false);
+            input.value = '';
         }
     };
 
@@ -58,9 +80,11 @@ const ResumeUploader = () => {
                     {success && (
                         <div className="mb-4 flex items-center justify-center gap-2 text-green-400">
                             <Check size={20} />
-                            <span>Resume uploaded successfully!</span>
+                            <span>{success}</span>
                         </div>
                     )}
+
+                    {error && <p className="mb-4 text-red-400 text-sm">{error}</p>}
 
                     <div
                         onClick={() => !uploading && fileInputRef.current?.click()}
@@ -84,10 +108,15 @@ const ResumeUploader = () => {
                         </div>
                     </div>
 
-                    {currentResume && (
+                    {loading ? (
+                        <p className="mt-4 text-gray-500 text-sm">Loading...</p>
+                    ) : currentResume ? (
                         <div className="mt-4 flex items-center justify-center gap-3 text-gray-400">
                             <FileText size={20} />
-                            <span>{currentResume.name}</span>
+                            <span>
+                                Current resume
+                                {uploadedOn(currentResume.name) && ` — uploaded ${uploadedOn(currentResume.name)}`}
+                            </span>
                             <a
                                 href={currentResume.url}
                                 target="_blank"
@@ -97,13 +126,14 @@ const ResumeUploader = () => {
                                 View
                             </a>
                         </div>
+                    ) : (
+                        <p className="mt-4 text-gray-500 text-sm">No resume uploaded yet.</p>
                     )}
                 </div>
 
                 <div className="mt-6 p-4 bg-[#1e1e1e] rounded-lg">
                     <p className="text-gray-400 text-sm">
-                        <strong className="text-gray-300">Note:</strong> Uploading a new resume will replace the existing one.
-                        The resume will be available at <code className="text-blue-400">/files/resume.pdf</code> after deployment.
+                        <strong className="text-gray-300">Note:</strong> Uploading a PDF replaces the current resume — the old file is deleted, so only one is ever kept. PDF only, up to 10 MB.
                     </p>
                 </div>
             </div>

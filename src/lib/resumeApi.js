@@ -22,17 +22,23 @@ export const fetchCurrentResume = async () => {
 };
 
 // Upload first, then delete everything else: a failed upload keeps the old
-// resume, and a failed cleanup still serves the newest one.
+// resume. A failed cleanup does not throw (the new file is already live); the
+// result carries cleanupFailed: true instead.
 export const replaceResume = async (file) => {
     const name = resumeFileName();
     const { error } = await bucket().upload(name, file, { contentType: 'application/pdf', upsert: false });
     if (error) throw error;
 
     const stale = staleResumes(await listResumes(), name);
+    let cleanupFailed = false;
     if (stale.length > 0) {
         const { error: removeError } = await bucket().remove(stale);
-        if (removeError) throw removeError;
+        if (removeError) {
+            console.error('Could not remove old resumes:', removeError);
+            cleanupFailed = true;
+        }
     }
 
-    return fetchCurrentResume();
+    const resume = await fetchCurrentResume();
+    return cleanupFailed ? { ...resume, cleanupFailed } : resume;
 };
