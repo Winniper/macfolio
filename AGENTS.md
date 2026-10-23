@@ -42,6 +42,7 @@ npx eslint src/windows/
 # Unit tests (Vitest, pure logic only)
 npm test
 npm test -- src/store/window.test.js
+npm run sounds    # regenerate public/sounds/*.wav from src/lib/synth.js
 ```
 
 ---

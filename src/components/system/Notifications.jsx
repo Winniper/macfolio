@@ -16,6 +16,7 @@ const NotificationBanner = ({ notification }) => {
     const timer = useRef(null);
 
     const resume = useCallback(() => {
+        window.clearTimeout(timer.current);
         startedAt.current = Date.now();
         timer.current = window.setTimeout(() => setLeaving(true), remaining.current);
     }, []);
@@ -45,6 +46,8 @@ const NotificationBanner = ({ notification }) => {
             role="status"
             onPointerEnter={() => { if (!leaving) pause(); }}
             onPointerLeave={() => { if (!leaving) resume(); }}
+            onFocus={() => { if (!leaving) pause(); }}
+            onBlur={() => { if (!leaving) resume(); }}
             // The slide-in also ends with animationend; only the slide-out removes it.
             onAnimationEnd={() => { if (leaving) dismiss(); }}
         >

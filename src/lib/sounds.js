@@ -33,7 +33,7 @@ export const createSoundPlayer = ({ createContext = defaultCreateContext, loadBu
     };
 
     return {
-        // Call from a user gesture (pointerdown/keydown): creates the context
+        // Call from a user gesture (pointerdown/pointerup/click/keydown): creates the context
         // once, resumes it if the browser suspended it, and preloads every sound.
         prime() {
             if (unavailable) return;
@@ -51,11 +51,13 @@ export const createSoundPlayer = ({ createContext = defaultCreateContext, loadBu
                 SOUND_NAMES.forEach((name) => load(name).catch(() => {}));
             }
 
-            if (context.state === 'suspended') context.resume?.().catch?.(() => {});
+            if (context.state !== 'running') context.resume?.().catch?.(() => {});
         },
 
         async play(name, volume = CUE_VOLUME[name]) {
-            if (!context || !SOUND_NAMES.includes(name)) return;
+            // A cue that can't sound now is dropped, not queued on a frozen clock
+            // (it would burst out on the next tap).
+            if (!context || context.state !== 'running' || !SOUND_NAMES.includes(name)) return;
 
             try {
                 const buffer = await load(name);

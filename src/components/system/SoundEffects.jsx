@@ -24,12 +24,16 @@ const SoundEffects = () => {
         };
 
         window.addEventListener('pointerdown', prime, true);
+        window.addEventListener('pointerup', prime, true);
+        window.addEventListener('click', prime, true);
         window.addEventListener('keydown', prime, true);
         const unsubscribeWindows = useWindowStore.subscribe(check);
         const unsubscribeSystem = useSystemStore.subscribe(check);
 
         return () => {
             window.removeEventListener('pointerdown', prime, true);
+            window.removeEventListener('pointerup', prime, true);
+            window.removeEventListener('click', prime, true);
             window.removeEventListener('keydown', prime, true);
             unsubscribeWindows();
             unsubscribeSystem();

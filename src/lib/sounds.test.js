@@ -82,6 +82,29 @@ describe('createSoundPlayer', () => {
         await expect(missing.play('startup')).resolves.toBeUndefined();
     });
 
+    it('drops a cue while the context is still suspended instead of queueing it', async () => {
+        const { context, started } = fakeContext();
+        context.resume = vi.fn(() => Promise.resolve());
+        const player = createSoundPlayer({ createContext: () => context, loadBuffer: vi.fn(async () => 'buffer') });
+
+        player.prime();
+        await expect(player.play('startup')).resolves.toBeUndefined();
+
+        expect(context.state).toBe('suspended');
+        expect(started).toEqual([]);
+    });
+
+    it('resumes an interrupted context on prime', () => {
+        const { context } = fakeContext();
+        context.state = 'interrupted';
+        const player = createSoundPlayer({ createContext: () => context, loadBuffer: vi.fn(async () => 'buffer') });
+
+        player.prime();
+
+        expect(context.resume).toHaveBeenCalled();
+        expect(context.state).toBe('running');
+    });
+
     it('ignores unknown sounds', async () => {
         const { context, started } = fakeContext();
         const player = createSoundPlayer({ createContext: () => context, loadBuffer: vi.fn(async () => 'buffer') });
