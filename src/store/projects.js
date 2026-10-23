@@ -1,6 +1,6 @@
-import { createProjectsStore } from '../lib/projectsStore';
+import { createFetchStore } from '../lib/fetchStore';
 import { fetchProjects } from '../lib/projectsApi';
 
-const useProjectsStore = createProjectsStore(fetchProjects);
+const useProjectsStore = createFetchStore(fetchProjects, { what: 'projects' });
 
 export default useProjectsStore;

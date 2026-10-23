@@ -52,9 +52,11 @@ Firestore collections and Storage paths are hardcoded at each call site rather t
 
 | Path | Read by | Written by |
 |---|---|---|
-| `projects` collection (ordered by `order` asc) | `lib/projectsApi.js` → `store/projects.js` (shared by Finder and Safari via `hooks/useProjects.js`) | `components/admin/ProjectsManager.jsx` |
-| `skills` collection | `windows/Terminal.jsx` | `components/admin/SkillsManager.jsx` |
+| `projects` collection (ordered by `order` asc) | `lib/projectsApi.js` → `store/projects.js` (shared by Finder, Safari, About This Mac and Spotlight via `hooks/useProjects.js`) | `components/admin/ProjectsManager.jsx` |
+| `skills` collection | `lib/skillsApi.js` → `store/skills.js` (shared by Terminal and Spotlight via `hooks/useSkills.js`) | `components/admin/SkillsManager.jsx` |
 | Storage `resume/resume.pdf` | `windows/Resume.jsx` | `components/admin/ResumeUploader.jsx` |
+
+Both stores come from `createFetchStore` (`src/lib/fetchStore.js`): the first caller fetches, a failed load retries on the next call.
 
 Everything else (gallery, blog posts, socials, tech stack, the Finder `locations` tree) is static in `src/constants/index.js` — a ~450-line file that is the de-facto content database (dock and desktop items live in `apps.js` instead).
 

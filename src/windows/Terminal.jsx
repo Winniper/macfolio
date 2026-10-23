@@ -1,36 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { Check, MessageSquare, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import useSkills from '../hooks/useSkills';
 import WindowWrapper from '../hoc/WindowWrapper';
 import WindowControls from '../components/WindowControl';
 
 const Terminal = () => {
-    const [skills, setSkills] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    const fetchSkills = useCallback(async () => {
-        setError(null);
-        setLoading(true);
-        try {
-            const snapshot = await getDocs(collection(db, 'skills'));
-            const skillsList = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-            setSkills(skillsList);
-        } catch (err) {
-            console.error('Error fetching skills:', err);
-            setError('Unable to fetch skills from database');
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchSkills();
-    }, [fetchSkills]);
+    const { skills, loading, error, retry } = useSkills();
 
     return (
         <div className="flex flex-col rounded-xl overflow-hidden shadow-2xl flex-1 min-h-0 w-full">
@@ -62,7 +37,7 @@ const Terminal = () => {
                             <span>Error: {error}</span>
                         </div>
                         <button
-                            onClick={fetchSkills}
+                            onClick={retry}
                             className="flex items-center gap-2 px-4 py-2 bg-[#333] hover:bg-[#444] text-gray-300 rounded-md transition-colors"
                         >
                             <RefreshCw size={14} />
