@@ -6,7 +6,7 @@ const titles = (groups) => groups.map((group) => [group.id, group.results.map((e
 describe('buildSpotlightIndex', () => {
     it('indexes every app that does something, but not the Archive', () => {
         const ids = buildSpotlightIndex().filter((entry) => entry.group === 'apps').map((entry) => entry.id);
-        expect(ids).toEqual(['app:finder', 'app:contact', 'app:terminal', 'app:resume', 'app:safari', 'app:missionControl', 'app:about']);
+        expect(ids).toEqual(['app:finder', 'app:contact', 'app:terminal', 'app:resume', 'app:safari', 'app:music', 'app:missionControl', 'app:about']);
     });
 
     it('opens windowed apps and runs launchers', () => {
@@ -68,6 +68,23 @@ describe('buildSpotlightIndex', () => {
         ]);
         expect(index.every((entry) => entry.action.type === 'openApp' && entry.action.id === 'terminal')).toBe(true);
         expect(new Set(index.map((entry) => entry.id)).size).toBe(index.length);
+    });
+
+    it('lists songs that play when chosen', () => {
+        const index = buildSpotlightIndex({
+            apps: [],
+            tracks: [{ id: 't1', title: 'First Light', artist: 'Studio Placeholder', album: 'Desk Sessions' }],
+        });
+        expect(index).toEqual([{
+            id: 'track:t1',
+            group: 'tracks',
+            title: 'First Light',
+            subtitle: 'Studio Placeholder — Desk Sessions',
+            icon: '/images/music.svg',
+            keywords: ['Studio Placeholder', 'Desk Sessions'],
+            action: { type: 'playTrack', id: 't1' },
+        }]);
+        expect(titles(searchSpotlight(index, 'desk'))).toEqual([['tracks', ['First Light']]]);
     });
 });
 

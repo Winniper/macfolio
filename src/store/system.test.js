@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import useSystemStore, { createInitialSystemState, isDesktopPhase } from './system';
 import useWindowStore, { createInitialWindowState } from './window';
+import { tracks } from '../constants';
 
 const system = () => useSystemStore.getState();
 const windows = () => useWindowStore.getState();
@@ -231,5 +232,81 @@ describe('notifications', () => {
         expect(system().soundEffects).toBe(false);
         system().setSoundEffects(true);
         expect(system().soundEffects).toBe(true);
+    });
+});
+
+describe('music playback', () => {
+    const [first, second, third] = tracks;
+
+    it('starts stopped, at the default volume, with nothing loaded', () => {
+        expect(system().audio).toEqual({
+            currentTrackId: null, isPlaying: false, volume: 0.6, position: 0, duration: 0, seekNonce: 0,
+        });
+    });
+
+    it('plays a track from the start and ignores unknown ones', () => {
+        system().playTrack(second.id);
+        expect(system().audio).toMatchObject({ currentTrackId: second.id, isPlaying: true, position: 0, seekNonce: 1 });
+        system().playTrack('nope');
+        expect(system().audio.currentTrackId).toBe(second.id);
+    });
+
+    it('toggles play, starting the first track when nothing is loaded', () => {
+        system().togglePlay();
+        expect(system().audio).toMatchObject({ currentTrackId: first.id, isPlaying: true });
+        system().togglePlay();
+        expect(system().audio.isPlaying).toBe(false);
+        system().togglePlay();
+        expect(system().audio.isPlaying).toBe(true);
+    });
+
+    it('skips forward keeping play state, and stops at the end of the list', () => {
+        system().playTrack(second.id);
+        system().nextTrack();
+        expect(system().audio).toMatchObject({ currentTrackId: third.id, isPlaying: true });
+        system().setAudioPosition(5);
+        system().nextTrack();
+        expect(system().audio).toMatchObject({ currentTrackId: third.id, isPlaying: false, position: 0 });
+    });
+
+    it('goes back a track, or restarts one more than 3 seconds in', () => {
+        system().playTrack(second.id);
+        system().setAudioPosition(10);
+        const nonce = system().audio.seekNonce;
+        system().previousTrack();
+        expect(system().audio).toMatchObject({ currentTrackId: second.id, position: 0, seekNonce: nonce + 1 });
+        system().previousTrack();
+        expect(system().audio.currentTrackId).toBe(first.id);
+        system().previousTrack();
+        expect(system().audio).toMatchObject({ currentTrackId: first.id, position: 0 });
+    });
+
+    it('clamps volume and seeks, counting only the seeks someone asked for', () => {
+        system().setVolume(2);
+        expect(system().audio.volume).toBe(1);
+        system().setVolume(-1);
+        expect(system().audio.volume).toBe(0);
+
+        system().playTrack(first.id);
+        system().setAudioDuration(18);
+        const nonce = system().audio.seekNonce;
+        system().setAudioPosition(4);
+        expect(system().audio).toMatchObject({ position: 4, seekNonce: nonce });
+        system().seekTo(30);
+        expect(system().audio).toMatchObject({ position: 18, seekNonce: nonce + 1 });
+        system().seekTo(-5);
+        expect(system().audio.position).toBe(0);
+        system().setAudioDuration(NaN);
+        expect(system().audio.duration).toBe(0);
+    });
+
+    it('can be paused and resumed from outside (media keys, a refused play)', () => {
+        system().setPlaying(true);
+        expect(system().audio.isPlaying).toBe(false);
+        system().playTrack(first.id);
+        system().setPlaying(false);
+        expect(system().audio.isPlaying).toBe(false);
+        system().setPlaying(true);
+        expect(system().audio.isPlaying).toBe(true);
     });
 });

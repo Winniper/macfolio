@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { runMenuAction } from './menuActions';
 import useWindowStore, { createInitialWindowState } from '../store/window';
 import useSystemStore, { createInitialSystemState } from '../store/system';
+import { tracks } from '../constants';
 
 const windows = () => useWindowStore.getState();
 const system = () => useSystemStore.getState();
@@ -130,5 +131,10 @@ describe('runMenuAction', () => {
     it('opens Spotlight', () => {
         runMenuAction({ type: 'spotlight' });
         expect(system().spotlightOpen).toBe(true);
+    });
+
+    it('plays a song', () => {
+        runMenuAction({ type: 'playTrack', id: tracks[0].id });
+        expect(system().audio).toMatchObject({ currentTrackId: tracks[0].id, isPlaying: true });
     });
 });

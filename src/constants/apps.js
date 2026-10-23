@@ -59,6 +59,16 @@ export const APPS = [
         minSize: { w: 480, h: 360 },
     },
     {
+        id: 'music',
+        title: 'Music',
+        keywords: ['songs', 'audio', 'player', 'tunes', 'playlist'],
+        icon: '/images/music.svg',
+        placement: ['desktop'],
+        desktopPosition: { top: 360, left: 20 },
+        defaultBounds: { x: 240, y: 90, w: 900, h: 560 },
+        minSize: { w: 640, h: 400 },
+    },
+    {
         id: 'missionControl',
         title: 'Mission Control',
         keywords: ['windows', 'overview', 'expose'],

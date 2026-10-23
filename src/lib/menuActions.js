@@ -64,6 +64,9 @@ export const runMenuAction = (action) => {
         case 'spotlight':
             system.openSpotlight();
             break;
+        case 'playTrack':
+            system.playTrack(action.id);
+            break;
         default:
             break;
     }

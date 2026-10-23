@@ -2,12 +2,13 @@ import { APPS } from '../constants/apps';
 
 // Spotlight's search is pure: the index is built from the registry and the
 // Firestore lists, and every entry carries a plain action for runMenuAction
-// (src/lib/menuActions.js). Notes and tracks join in Phases 7–8.
+// (src/lib/menuActions.js). Notes join in Phase 8.
 
 export const SPOTLIGHT_GROUPS = [
     { id: 'apps', label: 'Applications' },
     { id: 'projects', label: 'Projects' },
     { id: 'skills', label: 'Skills' },
+    { id: 'tracks', label: 'Songs' },
 ];
 
 // Firestore data is untyped: only non-blank strings count.
@@ -63,10 +64,23 @@ const skillEntries = (skills) => skills.flatMap((skill) => skillItems(skill?.ite
     action: { type: 'openApp', id: 'terminal' },
 })));
 
-export const buildSpotlightIndex = ({ apps = APPS, projects = [], skills = [] } = {}) => [
+const trackEntries = (list) => list
+    .filter((track) => isText(track?.title))
+    .map((track) => ({
+        id: `track:${track.id}`,
+        group: 'tracks',
+        title: track.title.trim(),
+        subtitle: [track.artist, track.album].filter(isText).join(' — '),
+        icon: '/images/music.svg',
+        keywords: [track.artist, track.album].filter(isText),
+        action: { type: 'playTrack', id: track.id },
+    }));
+
+export const buildSpotlightIndex = ({ apps = APPS, projects = [], skills = [], tracks = [] } = {}) => [
     ...appEntries(apps),
     ...projectEntries(projects),
     ...skillEntries(skills),
+    ...trackEntries(tracks),
 ];
 
 const normalize = (text) => text.toLowerCase().replace(/\s+/g, ' ').trim();

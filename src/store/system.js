@@ -5,11 +5,14 @@ import { initialBootPhase, isSmallScreen, markBootSeen, readBootSeen } from '../
 import { missionControlLayout } from '../lib/missionControl';
 import { addNotification, createNotification } from '../lib/notifications';
 import useWindowStore from './window';
+import { tracks } from '../constants';
+import { adjacentTrackId, clampVolume, trackById } from '../lib/music';
 
 // OS-level state that isn't about a single window: boot phase, Mission Control, Spotlight, notifications, the sound-effects switch and the desktop Clean Up counter; Control Center and audio in later phases.
 export const createInitialSystemState = () => ({
   bootPhase: initialBootPhase({ bootSeen: readBootSeen(), smallScreen: isSmallScreen() }),
   missionControl: null,
+  audio: { currentTrackId: null, isPlaying: false, volume: 0.6, position: 0, duration: 0, seekNonce: 0 },
   spotlightOpen: false,
   notifications: [],
   nextNotificationId: 1,
@@ -26,6 +29,20 @@ const visibleWindowEntries = () =>
     .filter(([, window]) => window.isOpen && !window.isMinimized && window.bounds)
     .sort(([, a], [, b]) => b.zIndex - a.zIndex)
     .map(([key, window]) => ({ key, bounds: window.bounds }));
+
+// Starts `id` from the beginning; seekNonce tells AudioController to seek.
+const loadTrack = (state, id, play) => {
+  state.audio.currentTrackId = id;
+  state.audio.isPlaying = play;
+  state.audio.position = 0;
+  state.audio.duration = 0;
+  state.audio.seekNonce += 1;
+};
+
+const rewind = (state) => {
+  state.audio.position = 0;
+  state.audio.seekNonce += 1;
+};
 
 const useSystemStore = create(
   immer((set, get) => ({
@@ -93,6 +110,76 @@ const useSystemStore = create(
     setSoundEffects: (on) =>
       set((state) => {
         state.soundEffects = Boolean(on);
+      }),
+
+    // Music. The store is the source of truth; AudioController mirrors it into
+    // the single <audio> element. Lock/restart leave the music playing.
+    playTrack: (id) =>
+      set((state) => {
+        if (trackById(tracks, id)) loadTrack(state, id, true);
+      }),
+
+    togglePlay: () =>
+      set((state) => {
+        if (!state.audio.currentTrackId) {
+          if (tracks[0]) loadTrack(state, tracks[0].id, true);
+          return;
+        }
+        state.audio.isPlaying = !state.audio.isPlaying;
+      }),
+
+    setPlaying: (playing) =>
+      set((state) => {
+        state.audio.isPlaying = Boolean(playing) && Boolean(state.audio.currentTrackId);
+      }),
+
+    // Next/previous keep play/pause, like Apple Music.
+    nextTrack: () =>
+      set((state) => {
+        const { currentTrackId, isPlaying } = state.audio;
+        if (!currentTrackId) return;
+
+        const next = adjacentTrackId(tracks, currentTrackId, 1);
+        if (next) {
+          loadTrack(state, next, isPlaying);
+        } else {
+          state.audio.isPlaying = false;
+          rewind(state);
+        }
+      }),
+
+    previousTrack: () =>
+      set((state) => {
+        const { currentTrackId, position, isPlaying } = state.audio;
+        if (!currentTrackId) return;
+
+        const previous = position > 3 ? null : adjacentTrackId(tracks, currentTrackId, -1);
+        if (previous) loadTrack(state, previous, isPlaying);
+        else rewind(state);
+      }),
+
+    seekTo: (seconds) =>
+      set((state) => {
+        if (!state.audio.currentTrackId) return;
+        const end = state.audio.duration || Infinity;
+        state.audio.position = Math.min(end, Math.max(0, Number(seconds) || 0));
+        state.audio.seekNonce += 1;
+      }),
+
+    // From the <audio> element: no seekNonce bump, so nothing echoes back.
+    setAudioPosition: (seconds) =>
+      set((state) => {
+        state.audio.position = Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
+      }),
+
+    setAudioDuration: (seconds) =>
+      set((state) => {
+        state.audio.duration = Number.isFinite(seconds) && seconds > 0 ? seconds : 0;
+      }),
+
+    setVolume: (volume) =>
+      set((state) => {
+        state.audio.volume = clampVolume(volume);
       }),
 
     // Switching apps (e.g. from the app switcher) leaves Mission Control first:
