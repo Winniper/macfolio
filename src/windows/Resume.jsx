@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Download, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
-import { ref, getDownloadURL } from 'firebase/storage';
-import { storage } from '../lib/firebase';
+import { fetchCurrentResume } from '../lib/resumeApi';
 import WindowWrapper from '../hoc/WindowWrapper';
 import WindowControls from '../components/WindowControl';
 
 const Resume = () => {
-    const [resumeUrl, setResumeUrl] = useState(null);
+    const [resume, setResume] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -14,9 +13,7 @@ const Resume = () => {
         setError(null);
         setLoading(true);
         try {
-            const storageRef = ref(storage, 'resume/resume.pdf');
-            const url = await getDownloadURL(storageRef);
-            setResumeUrl(url);
+            setResume(await fetchCurrentResume());
         } catch (err) {
             console.error('Error fetching resume:', err);
             setError('Unable to load resume');
@@ -35,16 +32,16 @@ const Resume = () => {
             <div className="flex items-center justify-between px-4 py-3 bg-[#2d2d2d] border-b border-[#1a1a1a] relative" data-titlebar>
                 <WindowControls target="resume" />
                 <span className="text-[13px] font-medium text-gray-300 absolute left-1/2 -translate-x-1/2">Resume.pdf</span>
-                {resumeUrl && !loading && !error && (
+                {resume && !loading && !error && (
                     <a
-                        href={resumeUrl}
+                        href={resume.downloadUrl}
                         download="Resume.pdf"
                         className="text-gray-400 hover:text-white transition-colors"
                     >
                         <Download size={16} />
                     </a>
                 )}
-                {(!resumeUrl || loading || error) && <div className="w-4"></div>}
+                {(!resume || loading || error) && <div className="w-4"></div>}
             </div>
 
             {/* PDF Preview area */}
@@ -69,9 +66,14 @@ const Resume = () => {
                             <span>Retry</span>
                         </button>
                     </div>
+                ) : !resume ? (
+                    <div className="flex flex-col items-center justify-center h-full gap-2 bg-gray-100">
+                        <span className="text-lg text-gray-600">No resume yet.</span>
+                        <p className="text-gray-500 text-sm">Check back soon.</p>
+                    </div>
                 ) : (
                     <iframe
-                        src={`${resumeUrl}#toolbar=0&navpanes=0&view=FitH`}
+                        src={`${resume.url}#toolbar=0&navpanes=0&view=FitH`}
                         title="Resume Preview"
                         className="w-full h-full border-none block"
                     />
@@ -81,5 +83,7 @@ const Resume = () => {
     );
 };
 
-export default WindowWrapper(Resume, 'resume');
+const ResumeWindow = WindowWrapper(Resume, 'resume');
+
+export default ResumeWindow;
 

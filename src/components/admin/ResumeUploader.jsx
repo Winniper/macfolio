@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, FileText, Trash2, Check } from 'lucide-react';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { storage } from '../../lib/firebase';
+import { replaceResume } from '../../lib/resumeApi';
 
 const ResumeUploader = () => {
     const [uploading, setUploading] = useState(false);
@@ -22,22 +21,12 @@ const ResumeUploader = () => {
         setSuccess(false);
 
         try {
-            // Delete old resume if exists
-            const oldRef = ref(storage, 'resume/resume.pdf');
-            try {
-                await deleteObject(oldRef);
-            } catch (e) {
-                // File doesn't exist, continue
-            }
-
-            // Upload new resume
-            const storageRef = ref(storage, 'resume/resume.pdf');
-            await uploadBytes(storageRef, file);
-            const url = await getDownloadURL(storageRef);
+            // Uploads the new file, then removes every older one
+            const resume = await replaceResume(file);
 
             setCurrentResume({
                 name: file.name,
-                url: url,
+                url: resume.url,
                 uploadedAt: new Date().toISOString()
             });
             setSuccess(true);

@@ -16,17 +16,17 @@ npm run music     # regenerate the placeholder songs in public/music/
 npx eslint src/windows/Finder.jsx   # lint a single file
 ```
 
-`npm test` runs Vitest once (`vitest run`); `npm test -- src/store/window.test.js` runs one file. Tests cover pure logic only (registry, stores, `src/lib/` helpers) — UI is verified by running `npm run dev`. Never import a window component or `src/lib/firebase.js` from a test: Firebase throws at init without `.env`.
+`npm test` runs Vitest once (`vitest run`); `npm test -- src/store/window.test.js` runs one file. Tests cover pure logic only (registry, stores, `src/lib/` helpers) — UI is verified by running `npm run dev`. Never import a window component or `src/lib/supabase.js` from a test: the client throws at import without `.env`.
 
-Requires a `.env` with the six `VITE_FIREBASE_*` keys (see `src/lib/firebase.js`); the app throws at Firebase init without them.
+Requires a `.env` with `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (see `.env.example`); the app throws at Supabase client init without them.
 
 ## Architecture
 
-A macOS-desktop-simulation portfolio: React 19 + Vite 7 + Tailwind 4, GSAP for drag/animation, Zustand+Immer for state, Firebase (Firestore/Storage/Auth) as the backend.
+A macOS-desktop-simulation portfolio: React 19 + Vite 7 + Tailwind 4, GSAP for drag/animation, Zustand+Immer for state, Supabase (Postgres/Storage/Auth) as the backend.
 
 ### Two disjoint halves
 
-`src/main.jsx` mounts three routes: `/` is the desktop (`App.jsx`), `/admin/login` and `/admin` (wrapped in `ProtectedRoute`) are a plain CMS dashboard. They share nothing but Firebase — the desktop reads, the dashboard writes. `vercel.json` rewrites all paths to `/`, which is what makes the `/admin` deep link work in production.
+`src/main.jsx` mounts three routes: `/` is the desktop (`App.jsx`), `/admin/login` and `/admin` (wrapped in `ProtectedRoute`) are a plain CMS dashboard. They share nothing but Supabase — the desktop reads, the dashboard writes. `vercel.json` rewrites all paths to `/`, which is what makes the `/admin` deep link work in production.
 
 ### The window system
 
@@ -50,25 +50,25 @@ The central abstraction. Understanding it requires `src/constants/apps.js` (the 
 - `openWindow(key, data, originRect)` accepts an optional payload and the launching icon's rect (for the open animation); `closeWindow` clears the payload but keeps `bounds` and zoom state, so a reopened window comes back where it was. `minimizeWindow`/`restoreWindow` move windows in and out of `minimizedStack` (rendered as dock tiles).
 - The store tracks `focusedId`; closing the focused window hands focus to the next-topmost open one.
 
-**`src/constants/apps.js` is the app registry** — pure data, no component imports (so the store and tests load it without Firebase). Dock items, desktop icons and the store seed are all derived from it; `placement` lists where an app's icon appears (`'dock'`, `'desktop'`), and `hasWindow: false` marks launchers like Archive. Adding a window means: a registry entry, a component ending in `WindowWrapper(Comp, '<same id>')`, its barrel export in `src/windows/index.js`, a render in `App.jsx`, and `#id` CSS in `src/index.css` if it needs custom styling. New apps go on the desktop, not the dock; system windows opened only from menus (like `about`) use `placement: []`.
+**`src/constants/apps.js` is the app registry** — pure data, no component imports (so the store and tests load it without Supabase). Dock items, desktop icons and the store seed are all derived from it; `placement` lists where an app's icon appears (`'dock'`, `'desktop'`), and `hasWindow: false` marks launchers like Archive. Adding a window means: a registry entry, a component ending in `WindowWrapper(Comp, '<same id>')`, its barrel export in `src/windows/index.js`, a render in `App.jsx`, and `#id` CSS in `src/index.css` if it needs custom styling. New apps go on the desktop, not the dock; system windows opened only from menus (like `about`) use `placement: []`.
 
 ### Data flow
 
-Firestore collections and Storage paths are hardcoded at each call site rather than centralized, so both sides must be changed together:
+Supabase table names and the Storage bucket are hardcoded at each call site rather than centralized, so both sides must be changed together:
 
 | Path | Read by | Written by |
 |---|---|---|
-| `projects` collection (ordered by `order` asc) | `lib/projectsApi.js` → `store/projects.js` (shared by Finder, Safari, About This Mac and Spotlight via `hooks/useProjects.js`) | `components/admin/ProjectsManager.jsx` |
-| `skills` collection | `lib/skillsApi.js` → `store/skills.js` (shared by Terminal and Spotlight via `hooks/useSkills.js`) | `components/admin/SkillsManager.jsx` |
-| Storage `resume/resume.pdf` | `windows/Resume.jsx` | `components/admin/ResumeUploader.jsx` |
+| `projects` table (ordered by `position`) | `lib/projectsApi.js` → `store/projects.js` (shared by Finder, Safari, About This Mac and Spotlight via `hooks/useProjects.js`) | `components/admin/ProjectsManager.jsx` |
+| `skills` table | `lib/skillsApi.js` → `store/skills.js` (shared by Terminal and Spotlight via `hooks/useSkills.js`) | `components/admin/SkillsManager.jsx` |
+| Storage bucket `resume` (one file, `resume-<timestamp>.pdf`) | `lib/resumeApi.js` → `windows/Resume.jsx` | `lib/resumeApi.js` → `components/admin/ResumeUploader.jsx` |
 
 Both stores come from `createFetchStore` (`src/lib/fetchStore.js`): the first caller fetches, a failed load retries on the next call.
 
 Everything else (gallery, blog posts, socials, tech stack, the Finder `locations` tree) is static in `src/constants/index.js` — a ~450-line file that is the de-facto content database (dock and desktop items live in `apps.js` instead).
 
-**Access control is not in this repo.** `VITE_*` vars are inlined into the client bundle, so the Firebase config is public; `ProtectedRoute` gates only the admin *UI*. Whether the public can write to `projects`/`skills`/Storage depends entirely on Firestore/Storage Security Rules, and there is no `firestore.rules` or `firebase.json` here — the rules exist only in the Firebase console. Any new collection needs rules set there (or added to the repo).
+**Access control lives in `supabase/migrations/` as Row Level Security:** public read, writes only for user ids in `public.admins`. `VITE_*` vars are inlined into the client bundle, so the anon key is public by design; `ProtectedRoute` gates only the admin *UI*. New tables need their own policies in a migration.
 
-Auth is `src/context/AuthContext.jsx` (`useAuth()` → `user, loading, login, logout, isAuthenticated`) over Firebase `onAuthStateChanged`, with `ProtectedRoute` gating `/admin`.
+Auth is `src/context/AuthContext.jsx` (`useAuth()` → `user, loading, login, logout, isAuthenticated`) over Supabase Auth (an account counts as signed in only if `public.is_admin()` is true), with `ProtectedRoute` gating `/admin`.
 
 ### Import aliases
 

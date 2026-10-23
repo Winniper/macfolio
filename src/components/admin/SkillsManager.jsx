@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, Save, X } from 'lucide-react';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { fetchSkills as loadSkills, createSkill, updateSkill, deleteSkill } from '../../lib/skillsApi';
 
 const SkillsManager = () => {
     const [skills, setSkills] = useState([]);
@@ -12,9 +11,7 @@ const SkillsManager = () => {
 
     const fetchSkills = async () => {
         try {
-            const snapshot = await getDocs(collection(db, 'skills'));
-            const skillsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setSkills(skillsList);
+            setSkills(await loadSkills());
         } catch (error) {
             console.error('Error fetching skills:', error);
         } finally {
@@ -29,11 +26,7 @@ const SkillsManager = () => {
     const handleAdd = async () => {
         if (!formData.category || !formData.items) return;
         try {
-            await addDoc(collection(db, 'skills'), {
-                category: formData.category,
-                items: formData.items.split(',').map(item => item.trim()).filter(Boolean),
-                createdAt: new Date()
-            });
+            await createSkill(formData, skills.length);
             setFormData({ category: '', items: '' });
             setShowForm(false);
             fetchSkills();
@@ -44,10 +37,7 @@ const SkillsManager = () => {
 
     const handleUpdate = async (id) => {
         try {
-            await updateDoc(doc(db, 'skills', id), {
-                category: formData.category,
-                items: formData.items.split(',').map(item => item.trim()).filter(Boolean)
-            });
+            await updateSkill(id, formData);
             setEditing(null);
             setFormData({ category: '', items: '' });
             fetchSkills();
@@ -59,7 +49,7 @@ const SkillsManager = () => {
     const handleDelete = async (id) => {
         if (!confirm('Are you sure you want to delete this skill category?')) return;
         try {
-            await deleteDoc(doc(db, 'skills', id));
+            await deleteSkill(id);
             fetchSkills();
         } catch (error) {
             console.error('Error deleting skill:', error);

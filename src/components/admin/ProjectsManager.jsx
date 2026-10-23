@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, Save, X, GripVertical } from 'lucide-react';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, orderBy, query } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { fetchProjects as loadProjects, createProject, updateProject, deleteProject } from '../../lib/projectsApi';
 
 const ProjectsManager = () => {
     const [projects, setProjects] = useState([]);
@@ -12,10 +11,7 @@ const ProjectsManager = () => {
 
     const fetchProjects = async () => {
         try {
-            const q = query(collection(db, 'projects'), orderBy('order', 'asc'));
-            const snapshot = await getDocs(q);
-            const projectsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setProjects(projectsList);
+            setProjects(await loadProjects());
         } catch (error) {
             console.error('Error fetching projects:', error);
         } finally {
@@ -30,11 +26,7 @@ const ProjectsManager = () => {
     const handleAdd = async () => {
         if (!formData.title) return;
         try {
-            await addDoc(collection(db, 'projects'), {
-                ...formData,
-                order: projects.length,
-                createdAt: new Date()
-            });
+            await createProject(formData, projects.length);
             setFormData({ title: '', github: '', website: '' });
             setShowForm(false);
             fetchProjects();
@@ -45,7 +37,7 @@ const ProjectsManager = () => {
 
     const handleUpdate = async (id) => {
         try {
-            await updateDoc(doc(db, 'projects', id), formData);
+            await updateProject(id, formData);
             setEditing(null);
             setFormData({ title: '', github: '', website: '' });
             fetchProjects();
@@ -57,7 +49,7 @@ const ProjectsManager = () => {
     const handleDelete = async (id) => {
         if (!confirm('Are you sure you want to delete this project?')) return;
         try {
-            await deleteDoc(doc(db, 'projects', id));
+            await deleteProject(id);
             fetchProjects();
         } catch (error) {
             console.error('Error deleting project:', error);

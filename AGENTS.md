@@ -4,7 +4,7 @@ This document provides instructions for AI coding agents working on this codebas
 
 ## Project Overview
 
-A macOS-styled portfolio website built with React 19, Vite 7, and Tailwind CSS 4. Features include draggable windows, dock animations (GSAP), Firebase backend, and Zustand state management.
+A macOS-styled portfolio website built with React 19, Vite 7, and Tailwind CSS 4. Features include draggable windows, dock animations (GSAP), Supabase backend, and Zustand state management.
 
 ## Tech Stack
 
@@ -12,7 +12,7 @@ A macOS-styled portfolio website built with React 19, Vite 7, and Tailwind CSS 4
 - **Styling**: Tailwind CSS 4 (via `@tailwindcss/vite` plugin)
 - **State**: Zustand with Immer middleware
 - **Animations**: GSAP with `@gsap/react` and Draggable plugin
-- **Backend**: Firebase (Firestore, Auth, Storage)
+- **Backend**: Supabase (Postgres, Auth, Storage)
 - **Routing**: React Router DOM 7
 - **Icons**: Lucide React
 
@@ -60,7 +60,7 @@ src/
 ├── context/        # React Context (AuthContext.jsx)
 ├── hoc/            # Higher-order components (WindowWrapper.jsx)
 ├── constants/      # Static data and configuration (index.js)
-├── lib/            # External service configs (firebase.js)
+├── lib/            # External service configs (supabase.js, the data APIs)
 ├── assets/         # Static assets
 └── index.css       # Global styles with Tailwind
 ```
@@ -216,21 +216,18 @@ import { Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
 {error && <AlertTriangle />}
 ```
 
-A Firestore list shared by several windows goes through `createFetchStore` (`src/lib/fetchStore.js`) with a hook in `src/hooks/` (`useProjects`, `useSkills`); components still render the same loading, error and retry UI.
+A Supabase list shared by several windows goes through `createFetchStore` (`src/lib/fetchStore.js`) with a hook in `src/hooks/` (`useProjects`, `useSkills`); components still render the same loading, error and retry UI.
 
 ---
 
 ## Environment Variables
 
-Firebase config uses Vite's `import.meta.env`:
+Supabase config uses Vite's `import.meta.env` (see `.env.example`):
 ```
-VITE_FIREBASE_API_KEY
-VITE_FIREBASE_AUTH_DOMAIN
-VITE_FIREBASE_PROJECT_ID
-VITE_FIREBASE_STORAGE_BUCKET
-VITE_FIREBASE_MESSAGING_SENDER_ID
-VITE_FIREBASE_APP_ID
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
 ```
+Never import `src/lib/supabase.js` from a test: it throws without these.
 
 ---
 
@@ -277,8 +274,8 @@ import { Draggable } from 'gsap/all';
 gsap.registerPlugin(Draggable);
 ```
 
-### Firebase Integration
-Services exported from `src/lib/firebase.js`:
+### Supabase Integration
+The client exported from `src/lib/supabase.js`:
 ```javascript
-import { db, auth, storage } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 ```
