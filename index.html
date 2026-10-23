@@ -5,6 +5,22 @@
     <link rel="icon" type="image/svg+xml" href="/macbook.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DevBarman's portfolio</title>
+    <script>
+      // Paint black before first paint when the boot will play, so the
+      // wallpaper never flashes ahead of the boot screen. Same rules as
+      // initialBootPhase() in src/lib/boot.js; App removes the class once the
+      // boot screen (or the desktop) has rendered.
+      (function () {
+        if (location.pathname.indexOf('/admin') === 0) return;
+        var bootSeen = false;
+        try {
+          bootSeen = sessionStorage.getItem('portfolio:bootSeen') === '1';
+        } catch (error) {}
+        if (!bootSeen && !matchMedia('(max-width: 639px)').matches) {
+          document.documentElement.classList.add('booting');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

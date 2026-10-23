@@ -7,7 +7,7 @@ import useSystemStore from '../../store/system';
 
 gsap.registerPlugin(DrawSVGPlugin);
 
-// One continuous cursive stroke reading "hello" (viewBox 0 0 640 240).
+// One continuous cursive stroke reading "hello".
 // Hand-authored; replace with your own path if you like.
 const HELLO_PATH = [
     'M 40 170 C 70 150, 110 90, 110 55 C 110 30, 85 30, 80 60 C 72 105, 70 150, 68 185',
@@ -18,6 +18,10 @@ const HELLO_PATH = [
     'C 400 140, 430 120, 450 135 C 470 150, 460 188, 432 188 C 408 188, 405 160, 420 140 C 432 126, 452 130, 470 135',
     'C 490 140, 510 130, 525 120',
 ].join(' ');
+
+// Tight around the stroke (path bounds 40,36.8 485x151.2, plus half the 14px
+// stroke) so centring the <svg> centres the drawing itself. Edit both together.
+const HELLO_VIEWBOX = '33 29.8 499 165.2';
 
 // Black screen that draws "hello", holds, and fades into the lock screen.
 // Any click or key skips straight to the lock screen.
@@ -54,7 +58,7 @@ const BootScreen = () => {
 
     return (
         <div ref={rootRef} className="boot-screen" onPointerDown={finishBoot}>
-            <svg viewBox="0 0 640 240" aria-label="hello" role="img">
+            <svg viewBox={HELLO_VIEWBOX} aria-label="hello" role="img">
                 <path
                     ref={pathRef}
                     d={HELLO_PATH}

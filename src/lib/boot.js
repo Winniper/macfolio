@@ -1,7 +1,9 @@
 // First-load boot sequence helpers. Every browser API here is wrapped so a
 // blocked or missing one degrades to "show the boot again", never a crash.
 
-const BOOT_SEEN_KEY = 'portfolio:bootSeen';
+// index.html repeats both values in its inline boot-shell script; keep them in sync.
+export const BOOT_SEEN_KEY = 'portfolio:bootSeen';
+export const SMALL_SCREEN_QUERY = '(max-width: 639px)';
 
 export const readBootSeen = (storage = globalThis.sessionStorage) => {
     try {
@@ -29,7 +31,7 @@ export const matchesMedia = (query) => {
 
 // Tailwind's `sm` breakpoint is 640px; below it the site shows its
 // desktop-only notice instead.
-export const isSmallScreen = () => matchesMedia('(max-width: 639px)');
+export const isSmallScreen = () => matchesMedia(SMALL_SCREEN_QUERY);
 
 export const prefersReducedMotion = () => matchesMedia('(prefers-reduced-motion: reduce)');
 

@@ -26,6 +26,12 @@ function App() {
   const fitToViewport = useWindowStore((state) => state.fitToViewport)
   const bootPhase = useSystemStore((state) => state.bootPhase)
 
+  // index.html paints the page black until the boot screen (or the desktop)
+  // is on screen; that has happened by the time this first effect runs.
+  useEffect(() => {
+    document.documentElement.classList.remove("booting")
+  }, [])
+
   useEffect(() => {
     window.addEventListener("resize", fitToViewport)
     return () => window.removeEventListener("resize", fitToViewport)
