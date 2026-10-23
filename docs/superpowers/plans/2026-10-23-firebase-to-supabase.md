@@ -26,6 +26,12 @@
 - Replacing the resume deletes the older one automatically, so there is one resume at a time.
 
 **Decisions:**
+- **Admin login is Supabase-only, and has no sign-up.** The user asked for this on 2026-10-23.
+  - The single admin account is created in the Supabase dashboard (Authentication → Users), and its password is set and changed there.
+  - "Allow new users to sign up" is turned off.
+  - The app has no sign-up UI, only `/admin/login`.
+  - `AuthContext` treats a session as signed in only if `public.is_admin()` is true, and immediately signs out any other account.
+  - Every write is still checked by RLS.
 - **Data:** the 2 projects and 5 skills already exported from Firestore are copied in, as the user chose. The old resume can't be copied, because Firebase Storage is over quota, so the user uploads it once from the admin panel.
 - **Admin:** only the owner can write, as the user chose. The `admins` table holds their Supabase user id. Its RLS has no policies, so no one can read or edit it through the API.
   - The user creates their admin login in the Supabase dashboard and turns public sign-ups off.
@@ -475,6 +481,14 @@ export const useAuth = () => {
     return context;
 };
 
+// Only accounts listed in public.admins count as signed in to the admin
+// panel. There is no sign-up in the app, and sign-ups are off in Supabase;
+// this check is the last line, and RLS still guards every write.
+const isAdmin = async () => {
+    const { data, error } = await supabase.rpc('is_admin');
+    return !error && data === true;
+};
+
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -482,15 +496,18 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         let active = true;
 
-        supabase.auth.getSession().then(({ data }) => {
+        const apply = async (session) => {
+            const admin = session?.user && (await isAdmin());
             if (!active) return;
-            setUser(data.session?.user ?? null);
+            setUser(admin ? session.user : null);
             setLoading(false);
-        });
+        };
 
+        supabase.auth.getSession().then(({ data }) => apply(data.session));
+
+        // Deferred: supabase-js warns against awaiting its API inside this callback.
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setUser(session?.user ?? null);
-            setLoading(false);
+            setTimeout(() => apply(session), 0);
         });
 
         return () => {
@@ -500,9 +517,14 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     // Supabase returns errors instead of throwing; Login.jsx expects a throw.
+    // A valid login that isn't an admin is signed straight back out.
     const login = async (email, password) => {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        if (!(await isAdmin())) {
+            await supabase.auth.signOut();
+            throw new Error('This account is not an admin.');
+        }
         return data;
     };
 
