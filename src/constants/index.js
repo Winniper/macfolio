@@ -8,6 +8,8 @@ const navIcons = [
     {
         id: 2,
         img: "/icons/search.svg",
+        action: "spotlight",
+        label: "Spotlight",
     },
     {
         id: 3,

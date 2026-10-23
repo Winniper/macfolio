@@ -94,6 +94,7 @@ Out of scope: `/admin` dashboard changes; Firestore security rules (no new colle
 ## 5. System shell
 
 - **Spotlight**: **Cmd/Ctrl+K** primary (macOS swallows Cmd+Space before the page sees it; Cmd+Space still bound for non-Mac) + menu-bar magnifier. Indexes apps (title + keywords), projects, skills, notes, tracks. Results grouped by type; ↑/↓, Enter, Esc. Actions: open app / open project in a browser tab / open Terminal / open note / play track.
+  - *Phase 6b note:* notes and tracks join the index with their apps (Phases 8 and 7). Cmd+K is the macOS shortcut; Ctrl+K there is left to text fields.
 - **Menu bar** (rebuilt `Navbar.jsx` + `MenuBarMenu.jsx`): Apple menu (About This Mac, Restart…, Lock Screen); bold focused-app name; File / Edit / Window / Help / **Go** menus where every item works (Window: Minimize/Zoom/Close; Browser File: New Tab; Help: opens Contact; Go: Projects/Contact/Resume). Right side: Spotlight icon, Control Center icon, **live** clock (ticks every minute).
 - **Desktop context menu**: wallpaper only (windows/iframes keep native menus). Items: New Note, Open Terminal, Clean Up (reset icon positions), About This Mac. On a desktop icon: Open.
 - **Control Center**: real — Sound slider (music volume), Display slider (dimming overlay), Now Playing mini-player; decorative — Wi-Fi, Bluetooth, AirDrop, Focus tiles.

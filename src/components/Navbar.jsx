@@ -24,6 +24,7 @@ const Navbar = () => {
     useShallow((state) => Object.keys(state.windows).filter((id) => state.windows[id].isOpen))
   )
   const bootPhase = useSystemStore((state) => state.bootPhase)
+  const toggleSpotlight = useSystemStore((state) => state.toggleSpotlight)
   const onDesktop = bootPhase === 'desktop'
   // Boot/lock overlays own the screen: never show a menu under them.
   const openMenu = onDesktop ? openState : null
@@ -95,9 +96,16 @@ const Navbar = () => {
       </div>
       <div>
         <ul>
-          {navIcons.map(({ id, img }) => (
+          {navIcons.map(({ id, img, action, label }) => (
             <li key={id}>
-              <img className="icon-hover invert" src={img} alt={`icon-${id}`} />
+              {action === 'spotlight' ? (
+                // Spotlight's outside-press handler skips this, so it toggles cleanly.
+                <button type="button" className="flex" data-spotlight-toggle aria-label={label} onClick={toggleSpotlight}>
+                  <img className="icon-hover invert" src={img} alt="" />
+                </button>
+              ) : (
+                <img className="icon-hover invert" src={img} alt={`icon-${id}`} />
+              )}
             </li>
           ))}
         </ul>
