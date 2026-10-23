@@ -692,7 +692,7 @@ nav {
   z-index: 100000;
 }
 .menubar {
-  gap: 2px !important;
+  gap: 2px;
 }
 .menubar-item {
   position: relative;
@@ -717,7 +717,7 @@ nav {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  display: block !important;
+  display: block;
   min-width: 220px;
   padding: 5px;
   border-radius: 8px;
