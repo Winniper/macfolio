@@ -7,11 +7,18 @@ import { tracks } from '../constants';
 
 const filePath = (src) => fileURLToPath(new URL(`../../public${src}`, import.meta.url));
 
-describe('placeholder music', () => {
+// Each piece takes seconds to render: do it once per file, not once per test.
+const rendered = new Map();
+const piece = (id) => {
+    if (!rendered.has(id)) rendered.set(id, renderPiece(id));
+    return rendered.get(id);
+};
+
+describe('placeholder music', { timeout: 30000 }, () => {
     it('has a piece for every track, as long as the track says, audible and in range', () => {
         expect(Object.keys(PIECES).sort()).toEqual(tracks.map((track) => track.id).sort());
         tracks.forEach((track) => {
-            const samples = renderPiece(track.id);
+            const samples = piece(track.id);
             const peak = samples.reduce((max, sample) => Math.max(max, Math.abs(sample)), 0);
             expect(samples.length / SAMPLE_RATE, track.id).toBeCloseTo(track.duration, 3);
             expect(peak, track.id).toBeGreaterThan(0.3);
@@ -28,7 +35,7 @@ describe('placeholder music', () => {
         tracks.forEach((track) => {
             expect(statSync(filePath(track.src)).size, track.id).toBeLessThan(600 * 1024);
             expect(new Uint8Array(readFileSync(filePath(track.src))), track.id)
-                .toEqual(encodeWav(renderPiece(track.id), SAMPLE_RATE));
+                .toEqual(encodeWav(piece(track.id), SAMPLE_RATE));
         });
     });
 });
