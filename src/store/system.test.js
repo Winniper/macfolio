@@ -224,4 +224,12 @@ describe('notifications', () => {
         system().restart();
         expect(system().notifications).toEqual([]);
     });
+
+    it('has sound effects on by default and can switch them', () => {
+        expect(system().soundEffects).toBe(true);
+        system().setSoundEffects(false);
+        expect(system().soundEffects).toBe(false);
+        system().setSoundEffects(true);
+        expect(system().soundEffects).toBe(true);
+    });
 });

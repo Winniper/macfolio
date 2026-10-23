@@ -119,6 +119,7 @@ Out of scope: `/admin` dashboard changes; Firestore security rules (no new colle
 - Startup chime on lock-screen dismissal (first allowed user gesture), minimize/restore whoosh, notification blip, Spotlight tick, empty-trash crunch.
 - "Sound Effects" toggle in Control Center (on after unlock), independent of the music volume.
 - Royalty-free files under `public/sounds/`, each < 50 KB. Apple's chime is not used.
+  - *Phase 6c note:* the files are synthesized by `scripts/generate-sounds.mjs` (original, royalty-free, deterministic). The empty-trash crunch comes with the Archive easter egg (Phase 9); the Sound Effects toggle UI, the Focus tile and notification history come with Control Center (Phase 7).
 
 **Easter eggs**
 - Bottom-left hot corner: all windows slide aside to reveal the desktop; leaving the corner restores them.
