@@ -10,6 +10,7 @@ import useWindowStore from "@store/window"
 import MissionControl from "@components/system/MissionControl"
 import AppSwitcher from "@components/system/AppSwitcher"
 import Spotlight from "@components/system/Spotlight"
+import Notifications from "@components/system/Notifications"
 import useSystemStore from "@store/system"
 import DesktopContextMenu from "@components/system/DesktopContextMenu"
 import BootScreen from "@components/system/BootScreen"
@@ -51,6 +52,7 @@ function App() {
       <MissionControl />
       <AppSwitcher />
       <Spotlight />
+      <Notifications />
       <DesktopContextMenu />
       <Analytics />
       {/* Lock screen sits under the boot layer so the boot fades into it. */}
