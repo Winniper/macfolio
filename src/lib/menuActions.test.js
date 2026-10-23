@@ -52,19 +52,21 @@ describe('runMenuAction', () => {
         const first = windows().windows.safari.data;
         runMenuAction({ type: 'safariNewTab' });
         expect(windows().windows.safari.data).toEqual({ newTab: true });
+        // A fresh object each time is what re-fires Browser's newTab effect.
         expect(windows().windows.safari.data).not.toBe(first);
         expect(windows().focusedId).toBe('safari');
     });
 
     it('drops keyboard focus before locking or restarting', () => {
-        const blur = vi.fn();
+        const phases = [];
+        const blur = vi.fn(() => phases.push(system().bootPhase));
         vi.stubGlobal('document', { activeElement: { blur } });
         runMenuAction({ type: 'lock' });
-        expect(blur).toHaveBeenCalledTimes(1);
         expect(system().bootPhase).toBe('locked');
+        useSystemStore.setState({ bootPhase: 'desktop' });
         runMenuAction({ type: 'restart' });
-        expect(blur).toHaveBeenCalledTimes(2);
         expect(system().bootPhase).toBe('booting');
+        expect(phases).toEqual(['desktop', 'desktop']);
     });
 
     it('copies the selected text', () => {
@@ -73,6 +75,18 @@ describe('runMenuAction', () => {
         vi.stubGlobal('getSelection', () => ({ toString: () => 'hello' }));
         runMenuAction({ type: 'copySelection' });
         expect(writeText).toHaveBeenCalledWith('hello');
+    });
+
+    it('swallows a refused clipboard write and skips empty selections', async () => {
+        const writeText = vi.fn().mockRejectedValue(new Error('denied'));
+        vi.stubGlobal('navigator', { clipboard: { writeText } });
+        vi.stubGlobal('getSelection', () => ({ toString: () => '' }));
+        runMenuAction({ type: 'copySelection' });
+        expect(writeText).not.toHaveBeenCalled();
+        vi.stubGlobal('getSelection', () => ({ toString: () => 'hi' }));
+        runMenuAction({ type: 'copySelection' });
+        await Promise.resolve();
+        expect(writeText).toHaveBeenCalledWith('hi');
     });
 
     it('tidies the desktop icons', () => {

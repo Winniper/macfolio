@@ -30,6 +30,14 @@ describe('buildMenuBar', () => {
         ]);
     });
 
+    it('offers to close the focused app, or About This Mac on the desktop', () => {
+        const focused = bar({ focusedId: 'terminal', windows: windowsWith({ terminal: {} }) });
+        expect(menu(focused, 'app').items.map((i) => [i.label, i.action])).toEqual([
+            ['Close Skills', { type: 'close', id: 'terminal' }],
+        ]);
+        expect(menu(bar(), 'app').items.map((i) => i.action)).toEqual([{ type: 'openApp', id: 'about' }]);
+    });
+
     it('adds New Tab to the File menu only for Safari', () => {
         expect(labels(menu(bar({ focusedId: 'safari', windows: windowsWith({ safari: {} }) }), 'file').items))
             .toEqual(['New Tab', 'Close Window']);

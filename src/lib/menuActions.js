@@ -32,8 +32,11 @@ export const runMenuAction = (action) => {
             windows.openWindow('safari', { newTab: true });
             break;
         case 'copySelection':
-            globalThis.navigator?.clipboard?.writeText(globalThis.getSelection?.()?.toString() ?? '');
+        {
+            const text = globalThis.getSelection?.()?.toString() ?? '';
+            if (text) globalThis.navigator?.clipboard?.writeText(text)?.catch?.(() => {});
             break;
+        }
         case 'lock':
             blurActiveElement();
             system.lock();
