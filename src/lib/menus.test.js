@@ -3,9 +3,9 @@ import { DESKTOP_TITLE, buildMenuBar, clampMenuPosition, desktopMenuItems } from
 import { buildWindowConfig } from '../constants/apps';
 
 // buildMenuBar takes the ids of open windows, in registry order.
-const windowsWith = (open = {}) => Object.keys(buildWindowConfig()).filter((id) => id in open);
+const openIdsOf = (...open) => Object.keys(buildWindowConfig()).filter((id) => open.includes(id));
 const bar = (options = {}) =>
-    buildMenuBar({ focusedId: null, openIds: windowsWith(), isMac: true, hasSelection: false, ...options });
+    buildMenuBar({ focusedId: null, openIds: openIdsOf(), isMac: true, hasSelection: false, ...options });
 const menu = (menuBar, id) => menuBar.menus.find((m) => m.id === id);
 const item = (menuBar, id, label) => menu(menuBar, id).items.find((i) => i.label === label);
 const labels = (items) => items.filter((i) => !i.separator).map((i) => i.label);
@@ -16,7 +16,7 @@ describe('buildMenuBar', () => {
     });
 
     it('names the focused app', () => {
-        expect(menu(bar({ focusedId: 'terminal', openIds: windowsWith({ terminal: {} }) }), 'app').title).toBe('Skills');
+        expect(menu(bar({ focusedId: 'terminal', openIds: openIdsOf('terminal') }), 'app').title).toBe('Skills');
     });
 
     it('offers About This Mac, Restart and Lock Screen in the Apple menu', () => {
@@ -28,7 +28,7 @@ describe('buildMenuBar', () => {
     });
 
     it('offers to close the focused app, or About This Mac on the desktop', () => {
-        const focused = bar({ focusedId: 'terminal', openIds: windowsWith({ terminal: {} }) });
+        const focused = bar({ focusedId: 'terminal', openIds: openIdsOf('terminal') });
         expect(menu(focused, 'app').items.map((i) => [i.label, i.action])).toEqual([
             ['Close Skills', { type: 'close', id: 'terminal' }],
         ]);
@@ -36,9 +36,9 @@ describe('buildMenuBar', () => {
     });
 
     it('adds New Tab to the File menu only for Safari', () => {
-        expect(labels(menu(bar({ focusedId: 'safari', openIds: windowsWith({ safari: {} }) }), 'file').items))
+        expect(labels(menu(bar({ focusedId: 'safari', openIds: openIdsOf('safari') }), 'file').items))
             .toEqual(['New Tab', 'Close Window']);
-        expect(labels(menu(bar({ focusedId: 'finder', openIds: windowsWith({ finder: {} }) }), 'file').items))
+        expect(labels(menu(bar({ focusedId: 'finder', openIds: openIdsOf('finder') }), 'file').items))
             .toEqual(['Close Window']);
     });
 
@@ -51,7 +51,7 @@ describe('buildMenuBar', () => {
     });
 
     it('points window commands at the focused window', () => {
-        const menuBar = bar({ focusedId: 'finder', openIds: windowsWith({ finder: {} }) });
+        const menuBar = bar({ focusedId: 'finder', openIds: openIdsOf('finder') });
         expect(item(menuBar, 'window', 'Minimize')).toMatchObject({ disabled: false, action: { type: 'minimize', id: 'finder' } });
         expect(item(menuBar, 'window', 'Zoom').action).toEqual({ type: 'zoom', id: 'finder' });
         expect(item(menuBar, 'window', 'Close').action).toEqual({ type: 'close', id: 'finder' });
@@ -61,7 +61,7 @@ describe('buildMenuBar', () => {
     it('lists open windows in the Window menu and checks the focused one', () => {
         const menuBar = bar({
             focusedId: 'resume',
-            openIds: windowsWith({ finder: {}, resume: {}, contact: { isMinimized: true } }),
+            openIds: openIdsOf('finder', 'resume', 'contact'),
         });
         const list = menu(menuBar, 'window').items.filter((i) => i.action?.type === 'focusApp');
         expect(list.map((i) => [i.label, i.checked])).toEqual([
@@ -97,7 +97,7 @@ describe('buildMenuBar', () => {
 describe('menu actions', () => {
     it('only open apps that exist in the registry', () => {
         const config = buildWindowConfig();
-        const menuBar = bar({ focusedId: 'finder', openIds: windowsWith({ finder: {} }) });
+        const menuBar = bar({ focusedId: 'finder', openIds: openIdsOf('finder') });
         const all = [...menuBar.apple, ...menuBar.menus.flatMap((m) => m.items), ...desktopMenuItems];
         const ids = all.filter((i) => i.action?.type === 'openApp').map((i) => i.action.id);
         expect(ids.length).toBeGreaterThan(0);
