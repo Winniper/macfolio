@@ -167,11 +167,14 @@ const gallery = [
     },
 ];
 
-// Shown on the lock screen. Put a photo in public/images and set `avatar` to
-// its path (e.g. "/images/avatar.jpg"); until then the initials are shown.
+// Shown on the lock screen and in About This Mac. Put a photo in public/images
+// and set `avatar` to its path; set `role`/`location` to show those lines
+// (left out while null).
 const profile = {
     name: "Debaditya Barman",
     avatar: null,
+    role: null,
+    location: null,
 };
 
 export {

@@ -10,6 +10,7 @@ import useWindowStore from './window';
 export const createInitialSystemState = () => ({
   bootPhase: initialBootPhase({ bootSeen: readBootSeen(), smallScreen: isSmallScreen() }),
   missionControl: null,
+  desktopCleanups: 0,
 });
 
 // Desktop shortcuts (switcher, Mission Control, hot corner) only apply here.
@@ -28,6 +29,12 @@ const useSystemStore = create(
     openMissionControl: () =>
       set((state) => {
         state.missionControl = { layout: missionControlLayout(visibleWindowEntries(), getViewport()) };
+      }),
+
+    // Desktop icons animate back to their default spots whenever this bumps.
+    cleanUpDesktop: () =>
+      set((state) => {
+        state.desktopCleanups += 1;
       }),
 
     closeMissionControl: () =>

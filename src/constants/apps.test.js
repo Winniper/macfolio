@@ -45,7 +45,7 @@ describe('app registry', () => {
 
     it('builds a closed window entry for every windowed app only', () => {
         const config = buildWindowConfig();
-        expect(Object.keys(config).sort()).toEqual(['contact', 'finder', 'resume', 'safari', 'terminal']);
+        expect(Object.keys(config).sort()).toEqual(['about', 'contact', 'finder', 'resume', 'safari', 'terminal']);
         expect(config.finder).toEqual({
             isOpen: false, zIndex: INITIAL_Z_INDEX, data: null,
             isMinimized: false, isMaximized: false, bounds: null, prevBounds: null, originRect: null,

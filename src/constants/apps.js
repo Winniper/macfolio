@@ -62,6 +62,14 @@ export const APPS = [
         action: 'missionControl',
     },
     {
+        id: 'about',
+        title: 'About This Mac',
+        icon: '/images/logo.svg',
+        placement: [],
+        defaultBounds: { x: 560, y: 140, w: 480, h: 340 },
+        minSize: { w: 400, h: 300 },
+    },
+    {
         id: 'trash',
         title: 'Archive',
         icon: '/images/trash.png',

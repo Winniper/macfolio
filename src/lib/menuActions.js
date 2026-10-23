@@ -1,0 +1,51 @@
+import useSystemStore from '../store/system';
+import useWindowStore from '../store/window';
+
+// Lock/Restart cover the desktop; drop focus first so the key that dismisses
+// the lock screen can't type into a hidden input.
+const blurActiveElement = () => globalThis.document?.activeElement?.blur?.();
+
+export const runMenuAction = (action) => {
+    const windows = useWindowStore.getState();
+    const system = useSystemStore.getState();
+
+    switch (action.type) {
+        case 'openApp':
+            windows.openWindow(action.id, action.data ?? null);
+            break;
+        case 'focusApp':
+            system.switchToApp(action.id);
+            break;
+        case 'close':
+            windows.closeWindow(action.id);
+            break;
+        case 'minimize':
+            windows.minimizeWindow(action.id);
+            break;
+        case 'zoom':
+            windows.toggleMaximize(action.id);
+            break;
+        case 'missionControl':
+            system.toggleMissionControl();
+            break;
+        case 'safariNewTab':
+            windows.openWindow('safari', { newTab: true });
+            break;
+        case 'copySelection':
+            globalThis.navigator?.clipboard?.writeText(globalThis.getSelection?.()?.toString() ?? '');
+            break;
+        case 'lock':
+            blurActiveElement();
+            system.lock();
+            break;
+        case 'restart':
+            blurActiveElement();
+            system.restart();
+            break;
+        case 'cleanUp':
+            system.cleanUpDesktop();
+            break;
+        default:
+            break;
+    }
+};
