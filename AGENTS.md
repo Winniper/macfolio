@@ -43,6 +43,7 @@ npx eslint src/windows/
 npm test
 npm test -- src/store/window.test.js
 npm run sounds    # regenerate public/sounds/*.wav from src/lib/synth.js
+npm run music     # regenerate the placeholder songs in public/music/
 ```
 
 ---
