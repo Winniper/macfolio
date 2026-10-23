@@ -5,10 +5,8 @@ import dayjs from 'dayjs';
 import { profile } from '../../constants';
 import useClock from '../../hooks/useClock';
 import { prefersReducedMotion } from '../../lib/boot';
+import { initialsOf } from '../../lib/profile';
 import useSystemStore from '../../store/system';
-
-const initials = (name) =>
-    name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase();
 
 const MODIFIER_KEYS = new Set(['Meta', 'Alt', 'Control', 'Shift']);
 
@@ -59,7 +57,7 @@ const LockScreen = () => {
                 <div className="lock-avatar">
                     {profile.avatar
                         ? <img src={profile.avatar} alt="" />
-                        : initials(profile.name)}
+                        : initialsOf(profile.name)}
                 </div>
                 <p className="lock-name">{profile.name}</p>
                 <p className="lock-hint">Click or press any key to enter</p>

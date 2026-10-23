@@ -32,6 +32,12 @@ const Browser = () => {
     // openWindow('safari', { url, title }) — e.g. from Finder — opens a new tab.
     // Each call passes a new object, so the same project twice opens twice.
     useEffect(() => {
+        // File → New Tab
+        if (request?.newTab) {
+            dispatch({ type: 'newTab' });
+            return;
+        }
+
         if (!request?.url) return;
 
         const url = normalizeAddress(request.url);

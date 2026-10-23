@@ -76,6 +76,8 @@ const Welcome = () => {
         const offset = reduced ? 0 : 24
 
         if (bootPhase !== 'desktop') {
+            // Restart/Lock can come mid-entrance: stop it so the letters really hide.
+            gsap.killTweensOf(letters)
             gsap.set(letters, { opacity: 0, y: offset })
             return
         }
