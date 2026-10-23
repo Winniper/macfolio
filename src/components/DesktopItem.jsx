@@ -23,6 +23,9 @@ const DesktopItem = ({ item, style }) => {
         const draggableInstance = Draggable.create(element, {
             type: 'x,y',
             inertia: true,
+            // Otherwise Draggable swallows the contextmenu event and turns a
+            // right-button release into a click that opens the app.
+            allowContextMenu: true,
         });
 
         dragRef.current = draggableInstance[0];
