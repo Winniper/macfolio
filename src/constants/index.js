@@ -161,8 +161,28 @@ const profile = {
     location: null,
 };
 
+// Banners sent once per page load, after the visitor unlocks (Phase 6c).
+const welcomeNotifications = [
+    {
+        delay: 4000,
+        appId: 'contact',
+        title: 'Messages',
+        body: "Hey, I'm Debaditya 👋 Have a look around",
+        action: { type: 'openApp', id: 'contact' },
+    },
+    {
+        delay: 45000,
+        unlessOpened: 'safari',
+        appId: 'safari',
+        title: 'Safari',
+        body: 'Want to see my projects running live?',
+        action: { type: 'openApp', id: 'safari' },
+    },
+];
+
 export {
     profile,
+    welcomeNotifications,
     navIcons,
     dockApps,
     blogPosts,

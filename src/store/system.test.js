@@ -179,3 +179,49 @@ describe('Spotlight state', () => {
         expect(system().spotlightOpen).toBe(false);
     });
 });
+
+describe('notifications', () => {
+    beforeEach(() => {
+        useSystemStore.setState({ bootPhase: 'desktop' });
+    });
+
+    it('adds banners with increasing ids', () => {
+        const first = system().notify({ appId: 'contact', title: 'Messages', body: 'Hi' });
+        const second = system().notify({ appId: 'safari', title: 'Safari' });
+        expect(second).toBe(first + 1);
+        expect(system().notifications.map((n) => [n.id, n.title])).toEqual([[first, 'Messages'], [second, 'Safari']]);
+    });
+
+    it('keeps at most three on screen', () => {
+        ['a', 'b', 'c', 'd'].forEach((title) => system().notify({ appId: 'safari', title }));
+        expect(system().notifications.map((n) => n.title)).toEqual(['b', 'c', 'd']);
+    });
+
+    it('ignores banners off the desktop or without a title', () => {
+        expect(system().notify({ appId: 'safari', title: '   ' })).toBeNull();
+        expect(system().notify({ appId: 'safari' })).toBeNull();
+        useSystemStore.setState({ bootPhase: 'locked' });
+        expect(system().notify({ appId: 'safari', title: 'Safari' })).toBeNull();
+        expect(system().notifications).toEqual([]);
+    });
+
+    it('dismisses one banner by id', () => {
+        const first = system().notify({ appId: 'contact', title: 'One' });
+        system().notify({ appId: 'safari', title: 'Two' });
+        system().dismissNotification(first);
+        expect(system().notifications.map((n) => n.title)).toEqual(['Two']);
+        system().dismissNotification(999);
+        expect(system().notifications).toHaveLength(1);
+    });
+
+    it('clears banners on lock and restart', () => {
+        system().notify({ appId: 'safari', title: 'Safari' });
+        system().lock();
+        expect(system().notifications).toEqual([]);
+
+        useSystemStore.setState({ bootPhase: 'desktop' });
+        system().notify({ appId: 'safari', title: 'Safari' });
+        system().restart();
+        expect(system().notifications).toEqual([]);
+    });
+});
