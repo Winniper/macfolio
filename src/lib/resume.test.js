@@ -26,6 +26,20 @@ describe('resume files', () => {
         expect(staleResumes(null, 'resume-2.pdf')).toEqual([]);
     });
 
+    it('keeps a resume newer than the one just uploaded', () => {
+        expect(staleResumes(
+            [{ name: 'resume-1.pdf' }, { name: 'resume-2.pdf' }, { name: 'resume-3.pdf' }],
+            'resume-2.pdf',
+        )).toEqual(['resume-1.pdf']);
+    });
+
+    it('deletes no resume when keepName is not a resume name', () => {
+        expect(staleResumes(
+            [{ name: 'resume-1.pdf' }, { name: 'notes.txt' }],
+            'weird.pdf',
+        )).toEqual(['notes.txt']);
+    });
+
     it('accepts PDFs up to 10 MB only', () => {
         expect(MAX_RESUME_BYTES).toBe(10 * 1024 * 1024);
         expect(validateResume({ type: 'application/pdf', size: 1000 })).toBeNull();

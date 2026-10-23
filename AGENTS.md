@@ -63,6 +63,8 @@ src/
 ├── lib/            # External service configs (supabase.js, the data APIs)
 ├── assets/         # Static assets
 └── index.css       # Global styles with Tailwind
+
+supabase/migrations/  # SQL schema, RLS and storage; applied by hand, in filename order
 ```
 
 ---
@@ -228,6 +230,8 @@ VITE_SUPABASE_URL
 VITE_SUPABASE_ANON_KEY
 ```
 Never import `src/lib/supabase.js` from a test: it throws without these.
+
+Setup outside the repo: add an admin by creating the user in the Supabase dashboard, then `insert into public.admins (user_id) …` with their auth user id. "Allow new users to sign up" must stay off. Vercel needs `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Apply `supabase/migrations/` by hand (dashboard SQL editor or MCP), in filename order.
 
 ---
 

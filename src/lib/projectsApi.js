@@ -1,6 +1,11 @@
 import { projectRow, toProject } from './records';
 import { supabase } from './supabase';
 
+// RLS-blocked updates and deletes affect 0 rows without an error.
+const assertWritten = (rows) => {
+    if (!rows || rows.length === 0) throw new Error('Not allowed — sign in as the admin.');
+};
+
 // Read for Finder, Safari, About and Spotlight; written by the admin panel.
 export const fetchProjects = async () => {
     const { data, error } = await supabase
@@ -18,11 +23,13 @@ export const createProject = async (form, position) => {
 };
 
 export const updateProject = async (id, form) => {
-    const { error } = await supabase.from('projects').update(projectRow(form)).eq('id', id);
+    const { data, error } = await supabase.from('projects').update(projectRow(form)).eq('id', id).select('id');
     if (error) throw error;
+    assertWritten(data);
 };
 
 export const deleteProject = async (id) => {
-    const { error } = await supabase.from('projects').delete().eq('id', id);
+    const { data, error } = await supabase.from('projects').delete().eq('id', id).select('id');
     if (error) throw error;
+    assertWritten(data);
 };

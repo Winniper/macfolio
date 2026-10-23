@@ -21,24 +21,31 @@ export const fetchCurrentResume = async () => {
     };
 };
 
-// Upload first, then delete everything else: a failed upload keeps the old
-// resume. A failed cleanup does not throw (the new file is already live); the
-// result carries cleanupFailed: true instead.
+// Upload first, then delete older files: a failed upload keeps the old
+// resume and throws. Once the upload succeeded nothing below may throw (the
+// new file is already live); a failure there returns the known uploaded file
+// with cleanupFailed: true instead.
 export const replaceResume = async (file) => {
     const name = resumeFileName();
     const { error } = await bucket().upload(name, file, { contentType: 'application/pdf', upsert: false });
     if (error) throw error;
 
-    const stale = staleResumes(await listResumes(), name);
-    let cleanupFailed = false;
-    if (stale.length > 0) {
-        const { error: removeError } = await bucket().remove(stale);
-        if (removeError) {
-            console.error('Could not remove old resumes:', removeError);
-            cleanupFailed = true;
+    try {
+        const stale = staleResumes(await listResumes(), name);
+        if (stale.length > 0) {
+            const { error: removeError } = await bucket().remove(stale);
+            if (removeError) throw removeError;
         }
+        const resume = await fetchCurrentResume();
+        if (resume) return resume;
+    } catch (err) {
+        console.error('Could not finish resume cleanup:', err);
     }
 
-    const resume = await fetchCurrentResume();
-    return cleanupFailed ? { ...resume, cleanupFailed } : resume;
+    return {
+        name,
+        url: bucket().getPublicUrl(name).data.publicUrl,
+        downloadUrl: bucket().getPublicUrl(name, { download: 'Resume.pdf' }).data.publicUrl,
+        cleanupFailed: true,
+    };
 };

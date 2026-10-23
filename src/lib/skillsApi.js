@@ -1,6 +1,11 @@
 import { skillRow, toSkill } from './records';
 import { supabase } from './supabase';
 
+// RLS-blocked updates and deletes affect 0 rows without an error.
+const assertWritten = (rows) => {
+    if (!rows || rows.length === 0) throw new Error('Not allowed — sign in as the admin.');
+};
+
 // Read for Terminal and Spotlight; written by the admin panel.
 export const fetchSkills = async () => {
     const { data, error } = await supabase
@@ -18,11 +23,13 @@ export const createSkill = async (form, position) => {
 };
 
 export const updateSkill = async (id, form) => {
-    const { error } = await supabase.from('skills').update(skillRow(form)).eq('id', id);
+    const { data, error } = await supabase.from('skills').update(skillRow(form)).eq('id', id).select('id');
     if (error) throw error;
+    assertWritten(data);
 };
 
 export const deleteSkill = async (id) => {
-    const { error } = await supabase.from('skills').delete().eq('id', id);
+    const { data, error } = await supabase.from('skills').delete().eq('id', id).select('id');
     if (error) throw error;
+    assertWritten(data);
 };

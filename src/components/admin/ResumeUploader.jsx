@@ -15,6 +15,7 @@ const ResumeUploader = () => {
     const [success, setSuccess] = useState(null);
     const [error, setError] = useState(null);
     const fileInputRef = useRef(null);
+    const successTimer = useRef(null);
 
     useEffect(() => {
         let cancelled = false;
@@ -28,11 +29,14 @@ const ResumeUploader = () => {
         return () => { cancelled = true; };
     }, []);
 
+    useEffect(() => () => clearTimeout(successTimer.current), []);
+
     const handleUpload = async (e) => {
         const input = e.target;
         const file = input.files[0];
         if (!file) return;
 
+        clearTimeout(successTimer.current);
         setSuccess(null);
         setError(null);
 
@@ -48,12 +52,13 @@ const ResumeUploader = () => {
         try {
             const resume = await replaceResume(file);
             setCurrentResume(resume);
-            setSuccess(resume.cleanupFailed
-                ? "Uploaded — but an older copy couldn't be removed. Try uploading again."
-                : 'Resume uploaded successfully!');
-
-            // Reset success message after 3 seconds
-            setTimeout(() => setSuccess(null), 3000);
+            if (resume.cleanupFailed) {
+                // The warning stays until the next action.
+                setSuccess("Uploaded — but an older copy couldn't be removed. Try uploading again.");
+            } else {
+                setSuccess('Resume uploaded successfully!');
+                successTimer.current = setTimeout(() => setSuccess(null), 3000);
+            }
         } catch (err) {
             console.error('Error uploading resume:', err);
             setError('Upload failed — your previous resume is unchanged.');

@@ -13,10 +13,19 @@ export const latestResume = (files) =>
         .filter((file) => RESUME_NAME.test(file?.name ?? ''))
         .sort((a, b) => stamp(b.name) - stamp(a.name))[0] ?? null;
 
-export const staleResumes = (files, keepName) =>
-    (Array.isArray(files) ? files : [])
+// Never returns a resume newer than keepName, so overlapping uploads can't
+// delete each other and the newest one always survives. If keepName isn't a
+// resume name, no resume is removed.
+export const staleResumes = (files, keepName) => {
+    const keep = RESUME_NAME.exec(keepName ?? '');
+    return (Array.isArray(files) ? files : [])
         .map((file) => file?.name)
-        .filter((name) => name && name !== keepName);
+        .filter((name) => {
+            if (!name || name === keepName) return false;
+            if (!RESUME_NAME.test(name)) return true;
+            return keep !== null && stamp(name) < Number(keep[1]);
+        });
+};
 
 export const validateResume = (file) => {
     if (file?.type !== 'application/pdf') return 'Please choose a PDF file.';

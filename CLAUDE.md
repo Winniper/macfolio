@@ -68,6 +68,8 @@ Everything else (gallery, blog posts, socials, tech stack, the Finder `locations
 
 **Access control lives in `supabase/migrations/` as Row Level Security:** public read, writes only for user ids in `public.admins`. `VITE_*` vars are inlined into the client bundle, so the anon key is public by design; `ProtectedRoute` gates only the admin *UI*. New tables need their own policies in a migration.
 
+**Setup outside the repo:** to add an admin, create the user in the Supabase dashboard, then run `insert into public.admins (user_id) …` with their auth user id. "Allow new users to sign up" must stay off. Vercel needs `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. The migrations in `supabase/migrations/` are applied by hand (Supabase dashboard SQL editor or MCP), in filename order.
+
 Auth is `src/context/AuthContext.jsx` (`useAuth()` → `user, loading, login, logout, isAuthenticated`) over Supabase Auth (an account counts as signed in only if `public.is_admin()` is true), with `ProtectedRoute` gating `/admin`.
 
 ### Import aliases
@@ -90,6 +92,6 @@ Tailwind 4 via `@tailwindcss/vite`, no config file — theme lives in the `@them
 
 ESLint's only custom rule is `no-unused-vars` with `varsIgnorePattern: '^[A-Z_]'` — unused capitalized identifiers (components, constants) don't error.
 
-**`npm run lint` is not clean** — 10 pre-existing errors: mostly `react-refresh/only-export-components` from window files that define helper components alongside the default export and from `export default WindowWrapper(X, 'key')` being an anonymous export, plus two `no-unused-vars`. Diff against that baseline rather than assuming a failing lint means you broke something. (`._*` AppleDouble files are ignored in `eslint.config.js` and `vite.config.js`'s `test.exclude`; before that, each one counted as a parse error.)
+**`npm run lint` is not clean** — 7 pre-existing errors (run `npx eslint . --ignore-pattern .superpowers`, which skips the `.superpowers` notes folder): six `react-refresh/only-export-components` (`AuthContext.jsx` exporting `useAuth` beside the provider, helper components next to the default export in `Contact.jsx` and `Finder.jsx`, and `export default WindowWrapper(X, 'key')` being an anonymous export), plus one `no-unused-vars` (`Icon` in `Finder.jsx`). Diff against that baseline rather than assuming a failing lint means you broke something. (`._*` AppleDouble files are ignored in `eslint.config.js` and `vite.config.js`'s `test.exclude`; before that, each one counted as a parse error.)
 
 The repo is on a case-insensitive external volume and is littered with AppleDouble `._*` files; they're gitignored — ignore them in listings and never edit them.
