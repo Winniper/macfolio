@@ -81,7 +81,7 @@ Tailwind 4 via `@tailwindcss/vite`, no config file — theme lives in the `@them
 
 ## Conventions
 
-`AGENTS.md` in the repo root documents file naming, import ordering, component layout, Zustand/HOC patterns, and the async `try/catch/finally` + `Loader2`/`AlertTriangle`/`RefreshCw` loading-state idiom used consistently across data-fetching components. Follow it; keep the two files in sync if conventions change.
+`AGENTS.md` in the repo root documents file naming, import ordering, component layout, Zustand/HOC patterns, and the async `try/catch/finally` + `Loader2`/`AlertTriangle`/`RefreshCw` loading-state idiom used consistently across data-fetching components (lists shared by several windows come from `createFetchStore` hooks in `src/hooks/`). Follow it; keep the two files in sync if conventions change.
 
 ESLint's only custom rule is `no-unused-vars` with `varsIgnorePattern: '^[A-Z_]'` — unused capitalized identifiers (components, constants) don't error.
 

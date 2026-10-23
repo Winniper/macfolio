@@ -53,7 +53,7 @@ const DesktopContextMenu = () => {
             if (event.key === 'Escape') close();
         };
         const unsubscribe = useSystemStore.subscribe((system) => {
-            if (!isDesktopPhase(system) || system.missionControl) close();
+            if (!isDesktopPhase(system) || system.missionControl || system.spotlightOpen) close();
         });
 
         document.addEventListener('pointerdown', handlePointerDown, true);

@@ -53,7 +53,8 @@ src/
 ├── components/     # Reusable UI components (Navbar, Dock, etc.)
 ├── windows/        # Window components (Terminal, Finder, Contact, Resume)
 ├── pages/          # Route pages (admin/Login, admin/Dashboard)
-├── store/          # Zustand stores (window.js)
+├── store/          # Zustand stores (window.js, system.js, projects.js, skills.js)
+├── hooks/          # Shared data hooks (useProjects, useSkills, useClock)
 ├── context/        # React Context (AuthContext.jsx)
 ├── hoc/            # Higher-order components (WindowWrapper.jsx)
 ├── constants/      # Static data and configuration (index.js)
@@ -212,6 +213,8 @@ import { Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
 {loading && <Loader2 className="animate-spin" />}
 {error && <AlertTriangle />}
 ```
+
+A Firestore list shared by several windows goes through `createFetchStore` (`src/lib/fetchStore.js`) with a hook in `src/hooks/` (`useProjects`, `useSkills`); components still render the same loading, error and retry UI.
 
 ---
 

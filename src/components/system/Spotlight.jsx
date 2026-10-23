@@ -70,7 +70,18 @@ const SpotlightPanel = () => {
     };
 
     return (
-        <div ref={panelRef} className="spotlight" role="dialog" aria-label="Spotlight Search">
+        <div
+            ref={panelRef}
+            className="spotlight"
+            role="dialog"
+            aria-label="Spotlight Search"
+            // Keep focus in the input so Esc and the arrows still work after clicking the
+            // padding, a label or a row. preventDefault on pointerdown only stops the focus
+            // change (and text selection); click still fires, so rows still activate.
+            onPointerDown={(event) => {
+                if (event.target.tagName !== 'INPUT') event.preventDefault();
+            }}
+        >
             <div className="spotlight-field">
                 <Search size={22} aria-hidden="true" />
                 <input
@@ -139,6 +150,8 @@ const Spotlight = () => {
             if (!isDesktopPhase(system) || !isSpotlightKey(event, isMac)) return;
 
             event.preventDefault();
+            // A held key repeats: stop the browser acting on it, but toggle only once.
+            if (event.repeat) return;
             system.toggleSpotlight();
         };
 

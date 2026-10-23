@@ -25,9 +25,12 @@ const Navbar = () => {
   )
   const bootPhase = useSystemStore((state) => state.bootPhase)
   const toggleSpotlight = useSystemStore((state) => state.toggleSpotlight)
+  const spotlightOpen = useSystemStore((state) => state.spotlightOpen)
   const onDesktop = bootPhase === 'desktop'
   // Boot/lock overlays own the screen: never show a menu under them.
-  const openMenu = onDesktop ? openState : null
+  // Spotlight takes over too: derive closed, and drop the state so the menu stays closed after.
+  const openMenu = onDesktop && !spotlightOpen ? openState : null
+  if (spotlightOpen && openState) setOpenMenu(null)
 
   const menuBar = buildMenuBar({ focusedId, openIds, isMac, hasSelection })
 

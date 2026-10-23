@@ -25,6 +25,8 @@ const AppSwitcher = () => {
             if (handled) event?.preventDefault();
 
             if (state !== switcherRef.current) {
+                // The switcher and Spotlight must never show together.
+                if (!switcherRef.current && state) useSystemStore.getState().closeSpotlight();
                 switcherRef.current = state;
                 setSwitcher(state);
             }
