@@ -57,6 +57,8 @@ const DesktopItem = ({ item, style }) => {
     }, [cleanups]);
 
     const handleOpen = (event) => {
+        // Ctrl+click is a context-menu click on macOS; it must not open the app.
+        if (event.ctrlKey) return;
         openWindow(item.id, null, toRect(event.currentTarget.getBoundingClientRect()));
     };
 

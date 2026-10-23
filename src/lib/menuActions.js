@@ -5,9 +5,14 @@ import useWindowStore from '../store/window';
 // the lock screen can't type into a hidden input.
 const blurActiveElement = () => globalThis.document?.activeElement?.blur?.();
 
+const LEAVES_MISSION_CONTROL = new Set(['openApp', 'close', 'minimize', 'zoom', 'safariNewTab']);
+
 export const runMenuAction = (action) => {
     const windows = useWindowStore.getState();
     const system = useSystemStore.getState();
+
+    // Acting on a window leaves Mission Control first: its layout is a snapshot.
+    if (LEAVES_MISSION_CONTROL.has(action.type) && system.missionControl) system.closeMissionControl();
 
     switch (action.type) {
         case 'openApp':

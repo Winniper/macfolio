@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { APPS, INITIAL_Z_INDEX, getApp, dockApps, desktopItems, buildWindowConfig } from './apps';
-import { navLinks } from './index';
 
 describe('app registry', () => {
     it('has unique ids', () => {
@@ -65,10 +64,5 @@ describe('app registry', () => {
 
     it('returns fresh objects on each build', () => {
         expect(buildWindowConfig().finder).not.toBe(buildWindowConfig().finder);
-    });
-
-    it('covers every menu-bar link with a window', () => {
-        const config = buildWindowConfig();
-        navLinks.forEach(({ type }) => expect(config[type], type).toBeDefined());
     });
 });

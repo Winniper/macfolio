@@ -31,8 +31,7 @@ const windowCommand = (label, type, focusedId) => ({
     disabled: !focusedId,
 });
 
-export const buildMenuBar = ({ focusedId, windows, isMac, hasSelection }) => {
-    const openIds = Object.keys(windows).filter((id) => windows[id].isOpen);
+export const buildMenuBar = ({ focusedId, openIds, isMac, hasSelection }) => {
     const appTitle = focusedId ? getApp(focusedId).title : DESKTOP_TITLE;
 
     return {
@@ -65,6 +64,7 @@ export const buildMenuBar = ({ focusedId, windows, isMac, hasSelection }) => {
                 items: [
                     windowCommand('Minimize', 'minimize', focusedId),
                     windowCommand('Zoom', 'zoom', focusedId),
+                    windowCommand('Close', 'close', focusedId),
                     SEPARATOR,
                     {
                         label: 'Mission Control',

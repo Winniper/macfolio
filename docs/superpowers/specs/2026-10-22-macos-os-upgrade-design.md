@@ -89,6 +89,8 @@ Out of scope: `/admin` dashboard changes; Firestore security rules (no new colle
 
 **About This Mac** (`placement: []`): small window styled like macOS's, "specs" are the owner's role, stack, location, and a résumé button.
 
+> Note: the "stack" line is deliberately omitted until real tech-stack data replaces the template `techStack`; role and location stay null (and hidden) until provided.
+
 ## 5. System shell
 
 - **Spotlight**: **Cmd/Ctrl+K** primary (macOS swallows Cmd+Space before the page sees it; Cmd+Space still bound for non-Mac) + menu-bar magnifier. Indexes apps (title + keywords), projects, skills, notes, tracks. Results grouped by type; ↑/↓, Enter, Esc. Actions: open app / open project in a browser tab / open Terminal / open note / play track.

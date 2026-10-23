@@ -40,6 +40,19 @@ describe('runMenuAction', () => {
         expect(windows().windows.finder.isOpen).toBe(false);
     });
 
+    it.each([
+        [{ type: 'openApp', id: 'about' }],
+        [{ type: 'close', id: 'finder' }],
+        [{ type: 'minimize', id: 'finder' }],
+        [{ type: 'zoom', id: 'finder' }],
+        [{ type: 'safariNewTab' }],
+    ])('leaves Mission Control before %o', (action) => {
+        windows().openWindow('finder');
+        system().openMissionControl();
+        runMenuAction(action);
+        expect(system().missionControl).toBeNull();
+    });
+
     it('toggles Mission Control', () => {
         runMenuAction({ type: 'missionControl' });
         expect(system().missionControl).not.toBeNull();

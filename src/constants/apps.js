@@ -64,7 +64,7 @@ export const APPS = [
     {
         id: 'about',
         title: 'About This Mac',
-        icon: '/images/logo.svg',
+        icon: '/images/about.svg',
         placement: [],
         defaultBounds: { x: 560, y: 140, w: 480, h: 340 },
         minSize: { w: 400, h: 300 },

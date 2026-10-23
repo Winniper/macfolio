@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import dayjs from 'dayjs'
+import { useShallow } from 'zustand/react/shallow'
 
 import { navIcons } from '@constants'
 import Menu from './menubar/Menu'
@@ -18,13 +19,16 @@ const Navbar = () => {
   const [openState, setOpenMenu] = useState(null)
   const [hasSelection, setHasSelection] = useState(false)
   const focusedId = useWindowStore((state) => state.focusedId)
-  const windows = useWindowStore((state) => state.windows)
+  // Only the open ids: bounds changes during drag/resize must not re-render the bar.
+  const openIds = useWindowStore(
+    useShallow((state) => Object.keys(state.windows).filter((id) => state.windows[id].isOpen))
+  )
   const bootPhase = useSystemStore((state) => state.bootPhase)
   const onDesktop = bootPhase === 'desktop'
   // Boot/lock overlays own the screen: never show a menu under them.
   const openMenu = onDesktop ? openState : null
 
-  const menuBar = buildMenuBar({ focusedId, windows, isMac, hasSelection })
+  const menuBar = buildMenuBar({ focusedId, openIds, isMac, hasSelection })
 
   // Close on a press outside the menu bar, Esc, or leaving the page.
   useEffect(() => {

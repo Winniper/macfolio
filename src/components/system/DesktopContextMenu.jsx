@@ -7,7 +7,7 @@ import { runMenuAction } from '../../lib/menuActions';
 import useSystemStore, { isDesktopPhase } from '../../store/system';
 
 // Everything that keeps the browser's own right-click menu.
-const NATIVE_MENU_AREAS = '[data-window], nav, #dock, .menu, .mission-control, .hot-corner, input, textarea, [contenteditable]';
+const NATIVE_MENU_AREAS = '[data-window], nav, #dock, .menu, .mission-control, .app-switcher, .hot-corner, input, textarea, [contenteditable]';
 
 // Right-click on the wallpaper or a desktop icon.
 const DesktopContextMenu = () => {
@@ -19,6 +19,11 @@ const DesktopContextMenu = () => {
             const system = useSystemStore.getState();
 
             if (!isDesktopPhase(system) || system.missionControl) return;
+            // A right-click on the open menu is swallowed, not handed to the browser.
+            if (menuRef.current?.contains(event.target)) {
+                event.preventDefault();
+                return;
+            }
             if (event.target.closest(NATIVE_MENU_AREAS)) return;
 
             event.preventDefault();

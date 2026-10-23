@@ -10,7 +10,7 @@ import useWindowStore from '../store/window';
 // Only real data is shown: role/location lines appear once set in constants.
 const AboutThisMac = () => {
     const openWindow = useWindowStore((state) => state.openWindow);
-    const { projects, loading } = useProjects();
+    const { projects, loading, error } = useProjects();
     const live = favoritesFromProjects(projects).length;
 
     return (
@@ -36,7 +36,7 @@ const AboutThisMac = () => {
                             </>
                         )}
                         <dt>Projects</dt>
-                        <dd>{loading ? '…' : `${projects.length} (${live} live)`}</dd>
+                        <dd>{loading || error ? '—' : `${projects.length} (${live} live)`}</dd>
                     </dl>
 
                     <div className="about-actions">

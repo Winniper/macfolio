@@ -1,23 +1,5 @@
 import { dockApps, desktopItems, getApp } from './apps';
 
-const navLinks = [
-    {
-        id: 1,
-        name: "Projects",
-        type: "finder",
-    },
-    {
-        id: 3,
-        name: "Contact",
-        type: "contact",
-    },
-    {
-        id: 4,
-        name: "Resume",
-        type: "resume",
-    },
-];
-
 const navIcons = [
     {
         id: 1,
@@ -179,7 +161,6 @@ const profile = {
 
 export {
     profile,
-    navLinks,
     navIcons,
     dockApps,
     blogPosts,
