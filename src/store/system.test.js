@@ -251,6 +251,15 @@ describe('music playback', () => {
         expect(system().audio.currentTrackId).toBe(second.id);
     });
 
+    it('lock keeps the music playing but restart stops it', () => {
+        system().playTrack(second.id);
+        system().lock();
+        expect(system().audio.isPlaying).toBe(true);
+        useSystemStore.setState({ bootPhase: 'desktop' });
+        system().restart();
+        expect(system().audio).toMatchObject({ isPlaying: false, currentTrackId: second.id });
+    });
+
     it('toggles play, starting the first track when nothing is loaded', () => {
         system().togglePlay();
         expect(system().audio).toMatchObject({ currentTrackId: first.id, isPlaying: true });

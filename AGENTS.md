@@ -53,7 +53,7 @@ npm run music     # regenerate the placeholder songs in public/music/
 ```
 src/
 ├── components/     # Reusable UI components (Navbar, Dock, etc.)
-├── windows/        # Window components (Terminal, Finder, Contact, Resume)
+├── windows/        # Window components (Terminal, Finder, Contact, Resume, Browser, AboutThisMac, Music)
 ├── pages/          # Route pages (admin/Login, admin/Dashboard)
 ├── store/          # Zustand stores (window.js, system.js, projects.js, skills.js)
 ├── hooks/          # Shared data hooks (useProjects, useSkills, useClock)

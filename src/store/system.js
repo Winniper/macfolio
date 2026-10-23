@@ -156,7 +156,7 @@ const useSystemStore = create(
       }),
 
     // Music. The store is the source of truth; AudioController mirrors it into
-    // the single <audio> element. Lock/restart leave the music playing.
+    // the single <audio> element. Only lock leaves the music playing; restart stops it.
     playTrack: (id) =>
       set((state) => {
         if (trackById(tracks, id)) loadTrack(state, id, true);
@@ -267,6 +267,7 @@ const useSystemStore = create(
         state.spotlightOpen = false;
         state.controlCenterOpen = false;
         state.notifications = [];
+        state.audio.isPlaying = false;
         state.bootPhase = 'booting';
       }),
   }))

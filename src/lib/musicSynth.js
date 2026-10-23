@@ -30,7 +30,7 @@ export const renderPiece = (id) => {
 
         const stepIndex = Math.floor(t / step);
         const intoStep = t - stepIndex * step;
-        const arpeggio = sine(chord[stepIndex % chord.length] + 12, t) * Math.min(1, intoStep / 0.005) * Math.exp(-intoStep / 0.18);
+        const arpeggio = sine(chord[stepIndex % chord.length] + 12, t) * Math.min(1, intoStep / 0.005) * Math.exp(-intoStep / 0.18) * Math.min(1, (step - intoStep) / 0.01);
         const bass = sine(chord[0] - 12, t);
 
         const fade = Math.min(1, t / 1.5, (seconds - t) / 1.5);
