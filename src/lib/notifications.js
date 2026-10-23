@@ -3,6 +3,8 @@
 
 export const NOTIFICATION_LIFETIME = 5000;
 export const MAX_NOTIFICATIONS = 3;
+// Control Center's "Notifications" list keeps this many, newest last.
+export const HISTORY_LIMIT = 10;
 
 export const createNotification = ({ appId, title, body = '', action = null }, { id }) => ({
     id,

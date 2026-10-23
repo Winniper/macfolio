@@ -25,6 +25,7 @@ const Navbar = () => {
   )
   const bootPhase = useSystemStore((state) => state.bootPhase)
   const toggleSpotlight = useSystemStore((state) => state.toggleSpotlight)
+  const toggleControlCenter = useSystemStore((state) => state.toggleControlCenter)
   const spotlightOpen = useSystemStore((state) => state.spotlightOpen)
   const onDesktop = bootPhase === 'desktop'
   // Boot/lock overlays own the screen: never show a menu under them.
@@ -104,6 +105,10 @@ const Navbar = () => {
               {action === 'spotlight' ? (
                 // Spotlight's outside-press handler skips this, so it toggles cleanly.
                 <button type="button" className="flex" data-spotlight-toggle aria-label={label} onClick={toggleSpotlight}>
+                  <img className="icon-hover invert" src={img} alt="" />
+                </button>
+              ) : action === 'controlCenter' ? (
+                <button type="button" className="flex" data-control-center-toggle aria-label={label} onClick={toggleControlCenter}>
                   <img className="icon-hover invert" src={img} alt="" />
                 </button>
               ) : (

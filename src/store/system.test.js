@@ -310,3 +310,86 @@ describe('music playback', () => {
         expect(system().audio.isPlaying).toBe(true);
     });
 });
+
+describe('Control Center', () => {
+    beforeEach(() => {
+        useSystemStore.setState({ bootPhase: 'desktop' });
+    });
+
+    it('opens, closes and toggles, only on the desktop', () => {
+        expect(system().controlCenterOpen).toBe(false);
+        system().openControlCenter();
+        expect(system().controlCenterOpen).toBe(true);
+        system().closeControlCenter();
+        expect(system().controlCenterOpen).toBe(false);
+        system().toggleControlCenter();
+        expect(system().controlCenterOpen).toBe(true);
+        system().toggleControlCenter();
+        expect(system().controlCenterOpen).toBe(false);
+
+        useSystemStore.setState({ bootPhase: 'locked' });
+        system().openControlCenter();
+        expect(system().controlCenterOpen).toBe(false);
+    });
+
+    it('never stacks with Spotlight or Mission Control', () => {
+        system().openSpotlight();
+        system().openMissionControl();
+        system().openControlCenter();
+        expect(system()).toMatchObject({ controlCenterOpen: true, spotlightOpen: false, missionControl: null });
+
+        system().openSpotlight();
+        expect(system()).toMatchObject({ controlCenterOpen: false, spotlightOpen: true });
+
+        system().openControlCenter();
+        system().openMissionControl();
+        expect(system().controlCenterOpen).toBe(false);
+        expect(system().missionControl).not.toBeNull();
+    });
+
+    it('closes on lock and restart', () => {
+        system().openControlCenter();
+        system().lock();
+        expect(system().controlCenterOpen).toBe(false);
+
+        useSystemStore.setState({ bootPhase: 'desktop' });
+        system().openControlCenter();
+        system().restart();
+        expect(system().controlCenterOpen).toBe(false);
+    });
+
+    it('dims the display down to 30%', () => {
+        expect(system().brightness).toBe(1);
+        system().setBrightness(0.5);
+        expect(system().brightness).toBe(0.5);
+        system().setBrightness(0.1);
+        expect(system().brightness).toBe(0.3);
+        system().setBrightness(2);
+        expect(system().brightness).toBe(1);
+        system().setBrightness('x');
+        expect(system().brightness).toBe(0.3);
+    });
+
+    it('Focus hides banners but still keeps them in the history', () => {
+        system().setFocusMode(true);
+        const id = system().notify({ appId: 'safari', title: 'Quiet' });
+        expect(id).not.toBeNull();
+        expect(system().notifications).toEqual([]);
+        expect(system().notificationHistory.map((n) => n.title)).toEqual(['Quiet']);
+
+        system().setFocusMode(false);
+        system().notify({ appId: 'safari', title: 'Loud' });
+        expect(system().notifications.map((n) => n.title)).toEqual(['Loud']);
+    });
+
+    it('keeps the ten newest notifications across lock, until cleared', () => {
+        Array.from({ length: 12 }, (_, i) => system().notify({ appId: 'safari', title: `n${i}` }));
+        expect(system().notificationHistory.map((n) => n.title)).toEqual(
+            Array.from({ length: 10 }, (_, i) => `n${i + 2}`),
+        );
+        system().lock();
+        expect(system().notificationHistory).toHaveLength(10);
+        system().clearNotificationHistory();
+        expect(system().notificationHistory).toEqual([]);
+    });
+});

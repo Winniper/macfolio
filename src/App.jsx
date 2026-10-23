@@ -13,6 +13,8 @@ import Spotlight from "@components/system/Spotlight"
 import Notifications from "@components/system/Notifications"
 import SoundEffects from "@components/system/SoundEffects"
 import AudioController from "@components/system/AudioController"
+import ControlCenter from "@components/system/ControlCenter"
+import DisplayDimmer from "@components/system/DisplayDimmer"
 import useSystemStore from "@store/system"
 import DesktopContextMenu from "@components/system/DesktopContextMenu"
 import BootScreen from "@components/system/BootScreen"
@@ -58,8 +60,10 @@ function App() {
       <Notifications />
       <SoundEffects />
       <AudioController />
+      <ControlCenter />
       <DesktopContextMenu />
       <Analytics />
+      <DisplayDimmer />
       {/* Lock screen sits under the boot layer so the boot fades into it. */}
       {(bootPhase === "booting" || bootPhase === "locked") && <LockScreen />}
       {bootPhase === "booting" && <BootScreen />}

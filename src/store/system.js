@@ -3,17 +3,21 @@ import { immer } from 'zustand/middleware/immer';
 import { getViewport } from '../lib/bounds';
 import { initialBootPhase, isSmallScreen, markBootSeen, readBootSeen } from '../lib/boot';
 import { missionControlLayout } from '../lib/missionControl';
-import { addNotification, createNotification } from '../lib/notifications';
+import { HISTORY_LIMIT, addNotification, createNotification } from '../lib/notifications';
 import useWindowStore from './window';
 import { tracks } from '../constants';
 import { adjacentTrackId, clampVolume, trackById } from '../lib/music';
 
-// OS-level state that isn't about a single window: boot phase, Mission Control, Spotlight, notifications, the sound-effects switch and the desktop Clean Up counter; Control Center and audio in later phases.
+// OS-level state that isn't about a single window: boot phase, Mission Control, Spotlight, Control Center (brightness, Focus), notifications and their history, the sound-effects switch, music playback and the desktop Clean Up counter.
 export const createInitialSystemState = () => ({
   bootPhase: initialBootPhase({ bootSeen: readBootSeen(), smallScreen: isSmallScreen() }),
   missionControl: null,
   audio: { currentTrackId: null, isPlaying: false, volume: 0.6, position: 0, duration: 0, seekNonce: 0 },
   spotlightOpen: false,
+  controlCenterOpen: false,
+  brightness: 1,
+  focusMode: false,
+  notificationHistory: [],
   notifications: [],
   nextNotificationId: 1,
   // Phase 7's Control Center toggles this; on by default.
@@ -51,6 +55,7 @@ const useSystemStore = create(
     openMissionControl: () =>
       set((state) => {
         state.spotlightOpen = false;
+        state.controlCenterOpen = false;
         state.missionControl = { layout: missionControlLayout(visibleWindowEntries(), getViewport()) };
       }),
 
@@ -74,6 +79,7 @@ const useSystemStore = create(
     openSpotlight: () =>
       set((state) => {
         if (state.bootPhase !== 'desktop') return;
+        state.controlCenterOpen = false;
         state.missionControl = null;
         state.spotlightOpen = true;
       }),
@@ -88,16 +94,53 @@ const useSystemStore = create(
       else get().openSpotlight();
     },
 
+    // Control Center, Spotlight and Mission Control never stack.
+    openControlCenter: () =>
+      set((state) => {
+        if (state.bootPhase !== 'desktop') return;
+        state.missionControl = null;
+        state.spotlightOpen = false;
+        state.controlCenterOpen = true;
+      }),
+
+    closeControlCenter: () =>
+      set((state) => {
+        state.controlCenterOpen = false;
+      }),
+
+    toggleControlCenter: () => {
+      if (get().controlCenterOpen) get().closeControlCenter();
+      else get().openControlCenter();
+    },
+
+    setBrightness: (level) =>
+      set((state) => {
+        state.brightness = Math.min(1, Math.max(0.3, Number(level) || 0));
+      }),
+
+    setFocusMode: (on) =>
+      set((state) => {
+        state.focusMode = Boolean(on);
+      }),
+
+    clearNotificationHistory: () =>
+      set((state) => {
+        state.notificationHistory = [];
+      }),
+
     // Banners exist only on the desktop: a scripted one that fires while the
-    // screen is locked is simply dropped.
+    // screen is locked is simply dropped. Focus hides the banner, but every
+    // notification still lands in Control Center's history.
     notify: (input) => {
-      const { bootPhase, nextNotificationId: id } = get();
+      const { bootPhase, nextNotificationId: id, focusMode } = get();
 
       if (bootPhase !== 'desktop' || typeof input?.title !== 'string' || !input.title.trim()) return null;
 
+      const notification = createNotification(input, { id });
       set((state) => {
         state.nextNotificationId += 1;
-        state.notifications = addNotification(state.notifications, createNotification(input, { id }));
+        state.notificationHistory = addNotification(state.notificationHistory, notification, HISTORY_LIMIT);
+        if (!focusMode) state.notifications = addNotification(state.notifications, notification);
       });
       return id;
     },
@@ -213,6 +256,7 @@ const useSystemStore = create(
       set((state) => {
         state.missionControl = null;
         state.spotlightOpen = false;
+        state.controlCenterOpen = false;
         state.notifications = [];
         state.bootPhase = 'locked';
       }),
@@ -221,6 +265,7 @@ const useSystemStore = create(
       set((state) => {
         state.missionControl = null;
         state.spotlightOpen = false;
+        state.controlCenterOpen = false;
         state.notifications = [];
         state.bootPhase = 'booting';
       }),
