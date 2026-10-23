@@ -65,4 +65,11 @@ describe('app registry', () => {
     it('returns fresh objects on each build', () => {
         expect(buildWindowConfig().finder).not.toBe(buildWindowConfig().finder);
     });
+
+    it('gives every app that does something lowercase search keywords', () => {
+        APPS.filter((app) => app.hasWindow !== false || app.action).forEach((app) => {
+            expect(app.keywords.length, app.id).toBeGreaterThan(0);
+            app.keywords.forEach((keyword) => expect(keyword).toBe(keyword.toLowerCase()));
+        });
+    });
 });

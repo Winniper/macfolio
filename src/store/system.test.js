@@ -135,3 +135,47 @@ describe('boot phase', () => {
         expect(isDesktopPhase({ bootPhase: 'booting' })).toBe(false);
     });
 });
+
+describe('Spotlight state', () => {
+    beforeEach(() => {
+        useSystemStore.setState({ bootPhase: 'desktop' });
+    });
+
+    it('starts closed, opens, closes and toggles', () => {
+        expect(system().spotlightOpen).toBe(false);
+        system().openSpotlight();
+        expect(system().spotlightOpen).toBe(true);
+        system().closeSpotlight();
+        expect(system().spotlightOpen).toBe(false);
+        system().toggleSpotlight();
+        expect(system().spotlightOpen).toBe(true);
+        system().toggleSpotlight();
+        expect(system().spotlightOpen).toBe(false);
+    });
+
+    it('never stacks with Mission Control', () => {
+        system().openMissionControl();
+        system().openSpotlight();
+        expect(system().missionControl).toBeNull();
+        expect(system().spotlightOpen).toBe(true);
+        system().openMissionControl();
+        expect(system().spotlightOpen).toBe(false);
+        expect(system().missionControl).not.toBeNull();
+    });
+
+    it('opens only on the desktop and closes on lock and restart', () => {
+        useSystemStore.setState({ bootPhase: 'locked' });
+        system().openSpotlight();
+        expect(system().spotlightOpen).toBe(false);
+
+        useSystemStore.setState({ bootPhase: 'desktop' });
+        system().openSpotlight();
+        system().lock();
+        expect(system().spotlightOpen).toBe(false);
+
+        useSystemStore.setState({ bootPhase: 'desktop' });
+        system().openSpotlight();
+        system().restart();
+        expect(system().spotlightOpen).toBe(false);
+    });
+});

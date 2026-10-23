@@ -5,11 +5,11 @@ import { initialBootPhase, isSmallScreen, markBootSeen, readBootSeen } from '../
 import { missionControlLayout } from '../lib/missionControl';
 import useWindowStore from './window';
 
-// OS-level state that isn't about a single window: boot phase and Mission
-// Control now; Spotlight, Control Center and audio in later phases.
+// OS-level state that isn't about a single window: boot phase, Mission Control, Spotlight and the desktop Clean Up counter; Control Center and audio in later phases.
 export const createInitialSystemState = () => ({
   bootPhase: initialBootPhase({ bootSeen: readBootSeen(), smallScreen: isSmallScreen() }),
   missionControl: null,
+  spotlightOpen: false,
   desktopCleanups: 0,
 });
 
@@ -28,6 +28,7 @@ const useSystemStore = create(
 
     openMissionControl: () =>
       set((state) => {
+        state.spotlightOpen = false;
         state.missionControl = { layout: missionControlLayout(visibleWindowEntries(), getViewport()) };
       }),
 
@@ -45,6 +46,24 @@ const useSystemStore = create(
     toggleMissionControl: () => {
       if (get().missionControl) get().closeMissionControl();
       else get().openMissionControl();
+    },
+
+    // Spotlight and Mission Control never stack: each closes the other.
+    openSpotlight: () =>
+      set((state) => {
+        if (state.bootPhase !== 'desktop') return;
+        state.missionControl = null;
+        state.spotlightOpen = true;
+      }),
+
+    closeSpotlight: () =>
+      set((state) => {
+        state.spotlightOpen = false;
+      }),
+
+    toggleSpotlight: () => {
+      if (get().spotlightOpen) get().closeSpotlight();
+      else get().openSpotlight();
     },
 
     // Switching apps (e.g. from the app switcher) leaves Mission Control first:
@@ -77,12 +96,14 @@ const useSystemStore = create(
     lock: () =>
       set((state) => {
         state.missionControl = null;
+        state.spotlightOpen = false;
         state.bootPhase = 'locked';
       }),
 
     restart: () =>
       set((state) => {
         state.missionControl = null;
+        state.spotlightOpen = false;
         state.bootPhase = 'booting';
       }),
   }))

@@ -92,6 +92,7 @@ export const buildMenuBar = ({ focusedId, openIds, isMac, hasSelection }) => {
                 title: 'Help',
                 items: [
                     { label: `Contact ${firstName}`, action: { type: 'openApp', id: 'contact' } },
+                    { label: 'Spotlight', shortcut: isMac ? '⌘K' : '⌃K', action: { type: 'spotlight' } },
                     SEPARATOR,
                     { label: 'Switch apps', shortcut: isMac ? '⌥⇥  ⌃`' : '⌃`', disabled: true },
                     { label: 'Mission Control', shortcut: isMac ? 'Top-right corner' : '⌃↑', disabled: true },

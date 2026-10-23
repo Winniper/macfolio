@@ -81,6 +81,8 @@ describe('buildMenuBar', () => {
         expect(item(bar({ isMac: false }), 'window', 'Mission Control').shortcut).toBe('⌃↑');
         expect(item(bar({ isMac: true }), 'help', 'Switch apps')).toMatchObject({ shortcut: '⌥⇥  ⌃`', disabled: true });
         expect(item(bar({ isMac: false }), 'help', 'Switch apps').shortcut).toBe('⌃`');
+        expect(item(bar({ isMac: true }), 'help', 'Spotlight')).toMatchObject({ shortcut: '⌘K', action: { type: 'spotlight' } });
+        expect(item(bar({ isMac: false }), 'help', 'Spotlight').shortcut).toBe('⌃K');
     });
 
     it('opens apps from the Go menu and Contact from Help', () => {

@@ -111,4 +111,24 @@ describe('runMenuAction', () => {
     it('ignores unknown actions', () => {
         expect(() => runMenuAction({ type: 'nope' })).not.toThrow();
     });
+
+    it('opens a web address in a new browser tab', () => {
+        const open = vi.fn();
+        vi.stubGlobal('open', open);
+        runMenuAction({ type: 'openUrl', url: 'github.com/x/b' });
+        expect(open).toHaveBeenCalledWith('https://github.com/x/b', '_blank', 'noopener,noreferrer');
+    });
+
+    it('never opens anything but a web address', () => {
+        const open = vi.fn();
+        vi.stubGlobal('open', open);
+        runMenuAction({ type: 'openUrl', url: 'javascript:alert(1)' });
+        runMenuAction({ type: 'openUrl', url: 42 });
+        expect(open).not.toHaveBeenCalled();
+    });
+
+    it('opens Spotlight', () => {
+        runMenuAction({ type: 'spotlight' });
+        expect(system().spotlightOpen).toBe(true);
+    });
 });

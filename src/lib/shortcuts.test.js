@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isMacPlatform, isMissionControlKey, switcherModifier } from './shortcuts';
+import { isMacPlatform, isMissionControlKey, isSpotlightKey, switcherModifier } from './shortcuts';
 
 describe('isMacPlatform', () => {
     it('recognizes macOS platform strings', () => {
@@ -45,5 +45,26 @@ describe('switcherModifier', () => {
 
     it('ignores plain Tab', () => {
         expect(switcherModifier({ altKey: false, ctrlKey: false, key: 'Tab', code: 'Tab' }, true)).toBeNull();
+    });
+});
+
+describe('isSpotlightKey', () => {
+    it('opens with Cmd+K on macOS, leaving Ctrl+K to text fields', () => {
+        expect(isSpotlightKey({ metaKey: true, key: 'k' }, true)).toBe(true);
+        expect(isSpotlightKey({ metaKey: true, key: 'K' }, true)).toBe(true);
+        expect(isSpotlightKey({ ctrlKey: true, key: 'k' }, true)).toBe(false);
+        expect(isSpotlightKey({ metaKey: true, code: 'Space', key: ' ' }, true)).toBe(false);
+    });
+
+    it('opens with Ctrl+K or Meta+Space elsewhere', () => {
+        expect(isSpotlightKey({ ctrlKey: true, key: 'k' }, false)).toBe(true);
+        expect(isSpotlightKey({ metaKey: true, code: 'Space', key: ' ' }, false)).toBe(true);
+        expect(isSpotlightKey({ metaKey: true, key: 'k' }, false)).toBe(false);
+    });
+
+    it('ignores plain K and Shift/Alt combinations', () => {
+        expect(isSpotlightKey({ key: 'k' }, true)).toBe(false);
+        expect(isSpotlightKey({ metaKey: true, shiftKey: true, key: 'k' }, true)).toBe(false);
+        expect(isSpotlightKey({ ctrlKey: true, altKey: true, key: 'k' }, false)).toBe(false);
     });
 });

@@ -3,7 +3,7 @@
 // without initializing Firebase. Each windowed app's id must match the key
 // passed to WindowWrapper in its component file.
 // defaultBounds/minSize are px; the store clamps them to the screen.
-// `action` marks dock launchers that run something instead of opening a window.
+// `action` marks dock launchers that run something instead of opening a window; `keywords` feed Spotlight.
 
 export const INITIAL_Z_INDEX = 1000;
 
@@ -11,6 +11,7 @@ export const APPS = [
     {
         id: 'finder',
         title: 'Projects',
+        keywords: ['finder', 'work', 'portfolio', 'folders', 'files'],
         icon: '/images/finder.png',
         desktopIcon: '/images/folder.png',
         placement: ['dock', 'desktop'],
@@ -21,6 +22,7 @@ export const APPS = [
     {
         id: 'contact',
         title: 'Contact',
+        keywords: ['email', 'message', 'hire', 'reach out', 'socials'],
         icon: '/images/contact.png',
         placement: ['dock'],
         defaultBounds: { x: 448, y: 160, w: 600, h: 350 },
@@ -29,6 +31,7 @@ export const APPS = [
     {
         id: 'terminal',
         title: 'Skills',
+        keywords: ['terminal', 'tech stack', 'technologies', 'tools'],
         icon: '/images/terminal.png',
         placement: ['dock'],
         defaultBounds: { x: 64, y: 96, w: 480, h: 400 },
@@ -38,6 +41,7 @@ export const APPS = [
         id: 'resume',
         title: 'Resume',
         label: 'Resume.pdf',
+        keywords: ['cv', 'experience', 'pdf'],
         icon: '/images/pdf.png',
         placement: ['desktop'],
         desktopPosition: { top: 160, left: 20 },
@@ -47,6 +51,7 @@ export const APPS = [
     {
         id: 'safari',
         title: 'Safari',
+        keywords: ['browser', 'web', 'internet', 'sites', 'live demos'],
         icon: '/images/safari.png',
         placement: ['desktop'],
         desktopPosition: { top: 260, left: 20 },
@@ -56,6 +61,7 @@ export const APPS = [
     {
         id: 'missionControl',
         title: 'Mission Control',
+        keywords: ['windows', 'overview', 'expose'],
         icon: '/images/mission-control.svg',
         placement: ['dock'],
         hasWindow: false,
@@ -64,6 +70,7 @@ export const APPS = [
     {
         id: 'about',
         title: 'About This Mac',
+        keywords: ['system', 'profile', 'info', 'mac'],
         icon: '/images/about.svg',
         placement: [],
         defaultBounds: { x: 560, y: 140, w: 480, h: 340 },
@@ -72,6 +79,7 @@ export const APPS = [
     {
         id: 'trash',
         title: 'Archive',
+        keywords: [],
         icon: '/images/trash.png',
         placement: ['dock'],
         hasWindow: false,

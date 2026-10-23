@@ -17,3 +17,14 @@ export const switcherModifier = (event, isMac) => {
     if (event.ctrlKey && event.code === 'Backquote') return 'Control';
     return null;
 };
+
+// Spotlight: Cmd+K on macOS (Ctrl+K there deletes to end of line), Ctrl+K
+// elsewhere, plus Meta+Space off-Mac — macOS takes Cmd+Space before the page.
+export const isSpotlightKey = (event, isMac) => {
+    if (event.altKey || event.shiftKey) return false;
+
+    const primary = isMac ? event.metaKey : event.ctrlKey;
+
+    if (primary && event.key?.toLowerCase() === 'k') return true;
+    return !isMac && Boolean(event.metaKey) && event.code === 'Space';
+};

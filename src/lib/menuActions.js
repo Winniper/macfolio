@@ -1,3 +1,4 @@
+import { normalizeAddress } from './browser';
 import useSystemStore from '../store/system';
 import useWindowStore from '../store/window';
 
@@ -5,7 +6,7 @@ import useWindowStore from '../store/window';
 // the lock screen can't type into a hidden input.
 const blurActiveElement = () => globalThis.document?.activeElement?.blur?.();
 
-const LEAVES_MISSION_CONTROL = new Set(['openApp', 'close', 'minimize', 'zoom', 'safariNewTab']);
+const LEAVES_MISSION_CONTROL = new Set(['openApp', 'close', 'minimize', 'zoom', 'safariNewTab', 'openUrl']);
 
 export const runMenuAction = (action) => {
     const windows = useWindowStore.getState();
@@ -52,6 +53,16 @@ export const runMenuAction = (action) => {
             break;
         case 'cleanUp':
             system.cleanUpDesktop();
+            break;
+        case 'openUrl':
+        {
+            // Firestore links are untyped: only ever open an http(s) address.
+            const url = normalizeAddress(action.url);
+            if (url) globalThis.open?.(url, '_blank', 'noopener,noreferrer');
+            break;
+        }
+        case 'spotlight':
+            system.openSpotlight();
             break;
         default:
             break;
