@@ -4,4 +4,4 @@ compatibility_date = "2026-01-01"
 
 [vars]
 # Origins allowed to frame proxied pages (comma separated). Add the production domain.
-ALLOWED_PARENTS = "http://localhost:5173"
+ALLOWED_PARENTS = "https://www.devbarman.xyz,https://devbarman.xyz,http://localhost:5173"
