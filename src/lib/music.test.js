@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-    adjacentTrackId, albumsOf, clampVolume, coverGradient, formatTime, nowPlayingNotification, trackById,
+    adjacentTrackId, albumsOf, albumTitleOf, artistOf, clampVolume, coverGradient, formatTime, nowPlayingNotification, trackById,
 } from './music';
 import { placeholderTracks as tracks } from '../constants';
 
@@ -78,5 +78,30 @@ describe('tracks', () => {
             });
             expect(track.duration, track.id).toBeGreaterThan(0);
         });
+    });
+});
+
+describe('songs without album or artist', () => {
+    const bare = [
+        { id: 'a', title: 'Alpha', artist: '', album: '', cover: null },
+        { id: 'b', title: 'Beta', artist: '', album: '', cover: null },
+    ];
+
+    it('uses the title and Unknown artist as fallbacks', () => {
+        expect(albumTitleOf(bare[0])).toBe('Alpha');
+        expect(artistOf(bare[0])).toBe('Unknown artist');
+        expect(albumTitleOf({ title: 'T', album: 'LP' })).toBe('LP');
+    });
+
+    it('groups album-less songs under their own titles, not one blank album', () => {
+        expect(albumsOf(bare).map((album) => [album.title, album.artist])).toEqual([
+            ['Alpha', 'Unknown artist'],
+            ['Beta', 'Unknown artist'],
+        ]);
+    });
+
+    it('builds a Now Playing body without a dangling dash', () => {
+        expect(nowPlayingNotification(bare[0]).body).toBe('Alpha');
+        expect(nowPlayingNotification({ title: 'A', artist: 'B' }).body).toBe('A — B');
     });
 });

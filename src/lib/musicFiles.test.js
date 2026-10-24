@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-    MAX_TRACK_BYTES, TRACK_SOFT_LIMIT, libraryOrPlaceholders, trackFilePath, validateAudio, validateCover,
+    MAX_TRACK_BYTES, TRACK_SOFT_LIMIT, canonicalAudioType, libraryOrPlaceholders, reorder, trackFilePath, validateAudio, validateCover,
 } from './musicFiles';
 
 const file = (type, size) => ({ type, size, name: 'x' });
@@ -17,6 +17,54 @@ describe('validateAudio', () => {
         expect(validateAudio(file('audio/mpeg', MAX_TRACK_BYTES + 1))).toMatch(/10 MB/);
         expect(validateAudio(file('audio/mpeg', 0))).toMatch(/empty/i);
         expect(validateAudio(null)).toMatch(/choose/i);
+    });
+});
+
+describe('canonicalAudioType', () => {
+    const named = (type, name) => ({ type, name });
+
+    it('maps MIME aliases to canonical types', () => {
+        expect(canonicalAudioType(named('audio/x-m4a', 'a.bin'))).toBe('audio/mp4');
+        expect(canonicalAudioType(named('audio/mp3', 'a.bin'))).toBe('audio/mpeg');
+        expect(canonicalAudioType(named('audio/mpeg', 'a.mp3'))).toBe('audio/mpeg');
+        expect(canonicalAudioType(named('audio/aac', 'a.aac'))).toBe('audio/aac');
+    });
+
+    it('falls back to the extension when the type is empty', () => {
+        expect(canonicalAudioType(named('', 'Song.M4A'))).toBe('audio/mp4');
+        expect(canonicalAudioType(named('', 'a.mp3'))).toBe('audio/mpeg');
+        expect(canonicalAudioType(named('', 'a.aac'))).toBe('audio/aac');
+    });
+
+    it('returns null for anything else', () => {
+        expect(canonicalAudioType(named('text/plain', 'a.txt'))).toBeNull();
+        expect(canonicalAudioType(named('audio/wav', 'a.wav'))).toBeNull();
+        expect(canonicalAudioType(named('', 'noextension'))).toBeNull();
+        expect(canonicalAudioType(null)).toBeNull();
+    });
+
+    it('lets validateAudio accept aliased and untyped uploads but not txt or wav', () => {
+        expect(validateAudio({ type: 'audio/x-m4a', name: 'a.m4a', size: 10 })).toBeNull();
+        expect(validateAudio({ type: 'audio/mp3', name: 'a.mp3', size: 10 })).toBeNull();
+        expect(validateAudio({ type: '', name: 'a.m4a', size: 10 })).toBeNull();
+        expect(validateAudio({ type: 'text/plain', name: 'a.txt', size: 10 })).toMatch(/MP3/);
+        expect(validateAudio({ type: 'audio/wav', name: 'a.wav', size: 10 })).toMatch(/MP3/);
+    });
+});
+
+describe('reorder', () => {
+    const list = ['a', 'b', 'c'];
+
+    it('moves a song up or down without mutating the input', () => {
+        expect(reorder(list, 1, -1)).toEqual(['b', 'a', 'c']);
+        expect(reorder(list, 1, 1)).toEqual(['a', 'c', 'b']);
+        expect(list).toEqual(['a', 'b', 'c']);
+    });
+
+    it('is a no-op at the ends', () => {
+        expect(reorder(list, 0, -1)).toBe(list);
+        expect(reorder(list, 2, 1)).toBe(list);
+        expect(reorder(list, 5, 1)).toBe(list);
     });
 });
 

@@ -11,7 +11,7 @@ const tabs = [
     { id: 'projects', label: 'Projects', icon: FolderOpen },
     { id: 'skills', label: 'Skills', icon: Cpu },
     { id: 'music', label: 'Music', icon: Music },
-    { id: 'resume', label: 'Resume', icon: FileText, Music },
+    { id: 'resume', label: 'Resume', icon: FileText },
 ];
 
 const Dashboard = () => {

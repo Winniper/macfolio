@@ -1,21 +1,26 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Plus, Trash2, Edit2, Save, X, Play, Pause, ArrowUp, ArrowDown, Check } from 'lucide-react';
-import { fetchTracks, createTrack, updateTrack, deleteTrack, swapTrackPositions } from '../../lib/tracksApi';
-import { validateAudio, validateCover, TRACK_SOFT_LIMIT } from '../../lib/musicFiles';
+import { Plus, Trash2, Edit2, Save, X, Play, Pause, ArrowUp, ArrowDown, Check, RefreshCw } from 'lucide-react';
+import { fetchTracks, createTrack, updateTrack, deleteTrack, renumberTracks } from '../../lib/tracksApi';
+import { validateAudio, validateCover, reorder, TRACK_SOFT_LIMIT } from '../../lib/musicFiles';
 import { formatTime, coverGradient } from '../../lib/music';
 
 const inputClass = 'w-full px-3 py-2 bg-[#1e1e1e] border border-[#3d3d3d] rounded text-white placeholder-gray-500';
 const emptyForm = { title: '', artist: '', album: '' };
 
 // Reads a song's length in seconds; resolves null if the browser can't decode it.
+// Gives up (null) after PROBE_TIMEOUT_MS so a stuck decode can't block Save.
+const PROBE_TIMEOUT_MS = 5000;
 const readDuration = (file) => new Promise((resolve) => {
     const url = URL.createObjectURL(file);
     const probe = new Audio();
+    let timer = null;
     const done = (value) => {
+        clearTimeout(timer);
         probe.removeAttribute('src');
         URL.revokeObjectURL(url);
         resolve(value);
     };
+    timer = setTimeout(() => done(null), PROBE_TIMEOUT_MS);
     probe.preload = 'metadata';
     probe.onloadedmetadata = () => done(Number.isFinite(probe.duration) ? Math.round(probe.duration) : null);
     probe.onerror = () => done(null);
@@ -40,6 +45,7 @@ const MusicManager = () => {
     const [tracks, setTracks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [loadFailed, setLoadFailed] = useState(false);
     const [success, setSuccess] = useState(null);
     const [busy, setBusy] = useState(false);
     const [playingId, setPlayingId] = useState(null);
@@ -48,6 +54,8 @@ const MusicManager = () => {
     const [form, setForm] = useState(emptyForm);
     const [audioFile, setAudioFile] = useState(null);
     const [duration, setDuration] = useState(null);
+    const [probing, setProbing] = useState(false);
+    const probeFile = useRef(null);
     const [coverFile, setCoverFile] = useState(null);
     const coverPreview = useObjectUrl(coverFile);
 
@@ -60,10 +68,13 @@ const MusicManager = () => {
     const successTimer = useRef(null);
 
     const load = async () => {
+        setLoading(true);
         try {
             setTracks(await fetchTracks());
+            setLoadFailed(false);
         } catch (err) {
             console.error('Error fetching tracks:', err);
+            setLoadFailed(true);
             setError('Could not load songs.');
         } finally {
             setLoading(false);
@@ -108,6 +119,8 @@ const MusicManager = () => {
         audio.src = track.src;
         setPlayingId(track.id);
         audio.play().catch((err) => {
+            // A newer preview (or a pause) interrupting this one is not a failure.
+            if (err?.name === 'AbortError') return;
             console.error('Preview failed:', err);
             setPlayingId(null);
             setError('Could not play that preview.');
@@ -119,6 +132,8 @@ const MusicManager = () => {
         setForm(emptyForm);
         setAudioFile(null);
         setDuration(null);
+        setProbing(false);
+        probeFile.current = null;
         setCoverFile(null);
     };
 
@@ -135,7 +150,14 @@ const MusicManager = () => {
         }
         setAudioFile(file);
         setForm((current) => ({ ...current, title: current.title || file.name.replace(/\.[^.]+$/, '') }));
-        setDuration(await readDuration(file));
+        setDuration(null);
+        setProbing(true);
+        probeFile.current = file;
+        const seconds = await readDuration(file);
+        // A newer pick (or a reset) owns the form now; drop this stale result.
+        if (probeFile.current !== file) return;
+        setDuration(seconds);
+        setProbing(false);
     };
 
     const pickCover = (e, setter) => {
@@ -153,7 +175,7 @@ const MusicManager = () => {
     };
 
     const handleAdd = async () => {
-        if (!audioFile || !form.title.trim() || busy) return;
+        if (!audioFile || !form.title.trim() || busy || probing) return;
         begin();
         setBusy(true);
         try {
@@ -208,6 +230,7 @@ const MusicManager = () => {
             if (playingId === track.id) stopPreview();
             await deleteTrack(track);
             if (editing === track.id) stopEdit();
+            flash('Song deleted.');
             await load();
         } catch (err) {
             console.error('Error deleting track:', err);
@@ -218,12 +241,12 @@ const MusicManager = () => {
     };
 
     const handleMove = async (index, step) => {
-        const other = tracks[index + step];
-        if (!other || busy) return;
+        const next = reorder(tracks, index, step);
+        if (next === tracks || busy) return;
         begin();
         setBusy(true);
         try {
-            await swapTrackPositions(tracks[index], other);
+            await renumberTracks(next);
         } catch (err) {
             console.error('Error reordering tracks:', err);
             setError('Could not reorder — check that you are signed in as the admin.');
@@ -233,8 +256,23 @@ const MusicManager = () => {
         }
     };
 
-    if (loading) {
+    if (loading && tracks.length === 0) {
         return <div className="text-gray-400">Loading songs...</div>;
+    }
+
+    if (loadFailed && tracks.length === 0) {
+        return (
+            <div className="flex items-center gap-3 text-red-400">
+                <span>Could not load songs.</span>
+                <button
+                    onClick={load}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-[#3d3d3d] hover:bg-[#4d4d4d] text-white rounded transition-colors"
+                >
+                    <RefreshCw size={16} />
+                    Retry
+                </button>
+            </div>
+        );
     }
 
     const iconButton = 'p-2 hover:bg-[#3d3d3d] text-gray-400 hover:text-white rounded transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed';
@@ -321,10 +359,10 @@ const MusicManager = () => {
                     <div className="flex gap-2">
                         <button
                             onClick={handleAdd}
-                            disabled={busy || !audioFile || !form.title.trim()}
+                            disabled={busy || probing || !audioFile || !form.title.trim()}
                             className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {busy ? 'Uploading…' : 'Save'}
+                            {busy ? 'Uploading…' : probing ? 'Reading length…' : 'Save'}
                         </button>
                         <button
                             onClick={resetAddForm}
@@ -338,7 +376,7 @@ const MusicManager = () => {
             )}
 
             <div className="space-y-3">
-                {tracks.length === 0 && !showForm && (
+                {tracks.length === 0 && !showForm && !loadFailed && (
                     <p className="text-gray-500 text-center py-8">No songs yet. The site plays its placeholder songs until you add one.</p>
                 )}
                 {tracks.map((track, index) => (
@@ -430,7 +468,7 @@ const MusicManager = () => {
                                     >
                                         <ArrowDown size={16} />
                                     </button>
-                                    <button onClick={() => startEdit(track)} aria-label="Edit" className={iconButton}>
+                                    <button onClick={() => startEdit(track)} disabled={busy} aria-label="Edit" className={iconButton}>
                                         <Edit2 size={16} />
                                     </button>
                                     <button

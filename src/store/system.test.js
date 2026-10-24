@@ -432,6 +432,24 @@ describe('music library', () => {
         expect(system().audio).toMatchObject({ currentTrackId: 'u1', isPlaying: true });
     });
 
+    it('resets position and duration when the current song disappears', () => {
+        system().playTrack(second.id);
+        system().setAudioPosition(42);
+        system().setAudioDuration(120);
+        system().setLibrary(uploaded);
+        expect(system().audio).toMatchObject({ position: 0, duration: 0 });
+    });
+
+    it('steps through an uploaded library with nextTrack', () => {
+        const two = [...uploaded, { ...uploaded[0], id: 'u2', src: '/u2.mp3' }];
+        system().setLibrary(two);
+        system().playTrack('u1');
+        system().nextTrack();
+        expect(system().audio).toMatchObject({ currentTrackId: 'u2', isPlaying: true });
+        system().nextTrack();
+        expect(system().audio).toMatchObject({ currentTrackId: 'u2', isPlaying: false });
+    });
+
     it('leaves playback alone when nothing is loaded', () => {
         system().setLibrary([]);
         system().togglePlay();

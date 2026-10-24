@@ -3,7 +3,7 @@ import { Disc3, ListMusic, Pause, Play, Radio, SkipBack, SkipForward, Volume1, V
 
 import WindowControls from '../components/WindowControl';
 import WindowWrapper from '../hoc/WindowWrapper';
-import { albumsOf, coverGradient, formatTime, trackById } from '../lib/music';
+import { albumsOf, albumTitleOf, artistOf, coverGradient, formatTime, trackById } from '../lib/music';
 import useSystemStore from '../store/system';
 
 const Cover = ({ title, cover, size }) => (
@@ -41,12 +41,12 @@ const PlayerBar = () => {
             </div>
 
             <div className="music-lcd">
-                <Cover title={track?.album} cover={track?.cover} size="sm" />
+                <Cover title={track && albumTitleOf(track)} cover={track?.cover} size="sm" />
                 <div className="music-lcd-info">
                     {track ? (
                         <>
                             <p className="music-lcd-title">{track.title}</p>
-                            <p className="music-lcd-artist">{track.artist} — {track.album}</p>
+                            <p className="music-lcd-artist">{artistOf(track)} — {albumTitleOf(track)}</p>
                         </>
                     ) : (
                         <p className="music-lcd-title">Not Playing</p>
@@ -99,12 +99,12 @@ const SongTable = ({ list }) => {
                     <tr key={track.id} className={track.id === currentTrackId ? 'is-current' : undefined}>
                         <td>
                             <button type="button" onClick={() => playTrack(track.id)}>
-                                <Cover title={track.album} cover={track.cover} size="xs" />
+                                <Cover title={albumTitleOf(track)} cover={track.cover} size="xs" />
                                 {track.title}
                             </button>
                         </td>
-                        <td>{track.artist}</td>
-                        <td>{track.album}</td>
+                        <td>{artistOf(track)}</td>
+                        <td>{albumTitleOf(track)}</td>
                         <td>{formatTime(track.duration)}</td>
                     </tr>
                 ))}
@@ -137,6 +137,8 @@ const Music = () => {
     const albums = useMemo(() => albumsOf(tracks), [tracks]);
     const openAlbum = (title) => setView({ id: 'album', album: title });
     const album = albums.find((entry) => entry.title === view.album);
+    // An opened album that no longer exists (library swapped in) falls back to Listen Now.
+    const viewId = view.id === 'album' && !album ? 'listenNow' : view.id;
 
     const sidebarButton = (id, label, icon) => {
         const Icon = icon;
@@ -145,7 +147,7 @@ const Music = () => {
             <button
                 key={id}
                 type="button"
-                className={`music-nav-item${view.id === id ? ' is-active' : ''}`}
+                className={`music-nav-item${viewId === id ? ' is-active' : ''}`}
                 onClick={() => setView({ id })}
             >
                 <Icon aria-hidden="true" /> {label}
@@ -165,26 +167,26 @@ const Music = () => {
                 </aside>
 
                 <div className="music-content">
-                    {view.id === 'listenNow' && (
+                    {viewId === 'listenNow' && (
                         <>
                             <h2 className="music-heading">Listen Now</h2>
                             <p className="music-subheading">Top Picks</p>
                             <AlbumGrid albums={albums} onOpen={openAlbum} />
                         </>
                     )}
-                    {view.id === 'songs' && (
+                    {viewId === 'songs' && (
                         <>
                             <h2 className="music-heading">Songs</h2>
                             <SongTable list={tracks} />
                         </>
                     )}
-                    {view.id === 'albums' && (
+                    {viewId === 'albums' && (
                         <>
                             <h2 className="music-heading">Albums</h2>
                             <AlbumGrid albums={albums} onOpen={openAlbum} />
                         </>
                     )}
-                    {view.id === 'album' && album && (
+                    {viewId === 'album' && (
                         <>
                             <div className="music-album-header">
                                 <Cover title={album.title} cover={album.cover} size="xl" />

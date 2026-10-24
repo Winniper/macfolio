@@ -3,7 +3,7 @@ import { BellRing, Bluetooth, Moon, Pause, Play, Radio, SkipBack, SkipForward, S
 
 import { getApp } from '../../constants/apps';
 import { runMenuAction } from '../../lib/menuActions';
-import { coverGradient, trackById } from '../../lib/music';
+import { albumTitleOf, coverGradient, trackById } from '../../lib/music';
 import useSystemStore from '../../store/system';
 
 const Toggle = ({ icon, label, detail, active, onClick }) => {
@@ -104,7 +104,7 @@ const ControlCenterPanel = () => {
             <Slider icon={Volume2} label="Sound" min={0} max={1} value={audio.volume} onChange={setVolume} />
 
             <div className="cc-module cc-now-playing">
-                <span className="cc-cover" style={track && !track.cover ? { background: coverGradient(track.album) } : undefined}>
+                <span className="cc-cover" style={track && !track.cover ? { background: coverGradient(albumTitleOf(track)) } : undefined}>
                     {track?.cover && <img src={track.cover} alt="" />}
                 </span>
                 <span className="cc-now-playing-text">

@@ -60,10 +60,10 @@ Supabase table names and the Storage bucket are hardcoded at each call site rath
 |---|---|---|
 | `projects` table (ordered by `position`) | `lib/projectsApi.js` → `store/projects.js` (shared by Finder, Safari, About This Mac and Spotlight via `hooks/useProjects.js`) | `components/admin/ProjectsManager.jsx` |
 | `skills` table | `lib/skillsApi.js` → `store/skills.js` (shared by Terminal and Spotlight via `hooks/useSkills.js`) | `components/admin/SkillsManager.jsx` |
-| `tracks` table (ordered by `position`) + public Storage bucket `music` (`audio/…`, `covers/…`) | `lib/tracksApi.js` → `store/tracks.js` → `hooks/useTrackLibrary.js` → `system.library` (Music, Control Center, Spotlight, AudioController) | admin Music manager via `lib/tracksApi.js` (Task 3) |
+| `tracks` table (ordered by `position`) + public Storage bucket `music` (`audio/…`, `covers/…`) | `lib/tracksApi.js` → `store/tracks.js` → `hooks/useTrackLibrary.js` → `system.library` (Music, Control Center, Spotlight, AudioController) | `components/admin/MusicManager.jsx` (via `lib/tracksApi.js`) |
 | Storage bucket `resume` (one file, `resume-<timestamp>.pdf`) | `lib/resumeApi.js` → `windows/Resume.jsx` | `lib/resumeApi.js` → `components/admin/ResumeUploader.jsx` |
 
-Both stores come from `createFetchStore` (`src/lib/fetchStore.js`): the first caller fetches, a failed load retries on the next call.
+All three stores (projects, skills, tracks) come from `createFetchStore` (`src/lib/fetchStore.js`): the first caller fetches, a failed load retries on the next call.
 
 Everything else (gallery, blog posts, socials, tech stack, the Finder `locations` tree) is static in `src/constants/index.js` — a ~450-line file that is the de-facto content database (dock and desktop items live in `apps.js` instead).
 

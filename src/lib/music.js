@@ -16,10 +16,15 @@ export const adjacentTrackId = (list, id, step) => {
 
 export const clampVolume = (volume) => Math.min(1, Math.max(0, Number(volume) || 0));
 
+// Songs without an album or artist still need something to show.
+export const UNKNOWN_ARTIST = 'Unknown artist';
+export const albumTitleOf = (track) => track.album || track.title;
+export const artistOf = (track) => track.artist || UNKNOWN_ARTIST;
+
 export const albumsOf = (list) => list.reduce((albums, track) => {
-    let album = albums.find((entry) => entry.title === track.album);
+    let album = albums.find((entry) => entry.title === albumTitleOf(track));
     if (!album) {
-        album = { title: track.album, artist: track.artist, cover: track.cover ?? null, tracks: [] };
+        album = { title: albumTitleOf(track), artist: artistOf(track), cover: track.cover ?? null, tracks: [] };
         albums.push(album);
     }
     album.tracks.push(track);
@@ -35,6 +40,6 @@ export const coverGradient = (seed) => {
 export const nowPlayingNotification = (track) => ({
     appId: 'music',
     title: 'Now Playing',
-    body: `${track.title} — ${track.artist}`,
+    body: track.artist ? `${track.title} — ${track.artist}` : track.title,
     action: { type: 'openApp', id: 'music' },
 });

@@ -231,7 +231,7 @@ VITE_SUPABASE_ANON_KEY
 ```
 Never import `src/lib/supabase.js` from a test: it throws without these.
 
-Music: songs live in the `tracks` table and the public `music` bucket (10 MB per file, 1-year `cacheControl` to protect the free plan's egress). The player reads `useSystemStore(s => s.library)`, never a constant; the `placeholderTracks` constant is only the fallback while nothing is uploaded. Pure rules are in `src/lib/musicFiles.js`.
+Music: songs live in the `tracks` table and the public `music` bucket (10 MB per file, 1-year `cacheControl` to protect the free plan's egress). The player reads `useSystemStore(s => s.library)`, never a constant; the `placeholderTracks` constant is only the fallback while nothing is uploaded. Pure rules are in `src/lib/musicFiles.js` (`canonicalAudioType` judges uploads by canonical MIME type, since browsers report M4A/MP3 inconsistently; `reorder` plus `renumberTracks` rewrite positions). Songs are managed in the admin Music tab (`components/admin/MusicManager.jsx`). Missing album/artist fall back to the title / "Unknown artist" through `albumTitleOf`/`artistOf` in `src/lib/music.js`; the stored values stay empty.
 
 Setup outside the repo: add an admin by creating the user in the Supabase dashboard, then `insert into public.admins (user_id) …` with their auth user id. "Allow new users to sign up" must stay off. Vercel needs `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Apply `supabase/migrations/` by hand (dashboard SQL editor or MCP), in filename order.
 

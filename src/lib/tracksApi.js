@@ -1,5 +1,5 @@
 import { toTrack, trackRow } from './records';
-import { trackFilePath } from './musicFiles';
+import { canonicalAudioType, trackFilePath } from './musicFiles';
 import { supabase } from './supabase';
 
 const MUSIC_BUCKET = 'music';
@@ -21,10 +21,10 @@ const extensionOf = (file, fallback) => {
 const randomId = () => Math.random().toString(36).slice(2, 10);
 
 // Long cacheControl lets repeat plays come from the CDN's cached egress quota.
-const upload = async (kind, file, fallbackExt) => {
+const upload = async (kind, file, fallbackExt, contentType) => {
     const path = trackFilePath(kind, extensionOf(file, fallbackExt), Date.now(), randomId());
     const { error } = await bucket().upload(path, file, {
-        contentType: file.type,
+        contentType,
         cacheControl: CACHE_CONTROL,
         upsert: false,
     });
@@ -57,11 +57,11 @@ export const fetchTracks = async () => {
 
 // Upload first; if the row insert fails the uploaded files are removed again.
 export const createTrack = async ({ audio, cover, duration, ...form }, position) => {
-    const audioPath = await upload('audio', audio, 'mp3');
+    const audioPath = await upload('audio', audio, 'mp3', canonicalAudioType(audio));
     let coverPath = null;
 
     try {
-        if (cover) coverPath = await upload('cover', cover, 'jpg');
+        if (cover) coverPath = await upload('cover', cover, 'jpg', cover.type);
         const { data, error } = await supabase
             .from('tracks')
             .insert({
@@ -86,7 +86,7 @@ export const updateTrack = async (id, form, newCover = null, oldCoverPath = null
     let coverPath = null;
 
     if (newCover) {
-        coverPath = await upload('cover', newCover, 'jpg');
+        coverPath = await upload('cover', newCover, 'jpg', newCover.type);
         row.cover_path = coverPath;
     }
 
@@ -110,14 +110,13 @@ export const deleteTrack = async (track) => {
     await removeQuietly([track.audioPath, track.coverPath]);
 };
 
-// Reordering with the up/down arrows: the two tracks trade positions.
-export const swapTrackPositions = async (a, b) => {
-    const move = async (track, position) => {
-        const { data, error } = await supabase.from('tracks').update({ position }).eq('id', track.id).select('id');
+// Reordering: `list` is the desired order. Every row whose position differs
+// from its index is rewritten, which also heals duplicate positions.
+export const renumberTracks = async (list) => {
+    for (const [index, track] of list.entries()) {
+        if (track.order === index) continue;
+        const { data, error } = await supabase.from('tracks').update({ position: index }).eq('id', track.id).select('id');
         if (error) throw error;
         assertWritten(data);
-    };
-
-    await move(a, b.order);
-    await move(b, a.order);
+    }
 };

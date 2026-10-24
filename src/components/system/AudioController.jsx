@@ -24,7 +24,18 @@ const AudioController = () => {
     useEffect(() => {
         const element = audioRef.current;
         const track = trackById(libraryState(), currentTrackId);
-        if (!element || !track) return;
+        if (!element) return;
+
+        if (!track) {
+            // Nothing to play (the library swapped the song out): release the
+            // old source. Guarded on hasAttribute so first mount does nothing.
+            if (element.hasAttribute('src')) {
+                element.pause();
+                element.removeAttribute('src');
+                element.load();
+            }
+            return;
+        }
 
         element.src = track.src;
         element.load();
@@ -32,7 +43,11 @@ const AudioController = () => {
 
     useEffect(() => {
         const element = audioRef.current;
-        if (!element || !currentTrackId) return;
+        if (!element) return;
+        if (!currentTrackId) {
+            element.pause();
+            return;
+        }
 
         if (isPlaying) {
             // A refused play (autoplay rules, missing file) leaves the player
