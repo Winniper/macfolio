@@ -1,20 +1,30 @@
-import { useEffect, useReducer, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Plus, RotateCw, X } from 'lucide-react';
 
 import CantOpenPage from '../components/browser/CantOpenPage';
 import FavoritesPage from '../components/browser/FavoritesPage';
 import WindowControls from '../components/WindowControl';
 import WindowWrapper from '../hoc/WindowWrapper';
+import useProjects from '../hooks/useProjects';
 import {
     activeTab,
+    addressOrSearch,
     browserReducer,
     createBrowserState,
     currentEntry,
     errorEntry,
+    favoritesFromProjects,
+    frameSrc,
+    hostnameOf,
     normalizeAddress,
     pageEntry,
 } from '../lib/browser';
 import useWindowStore from '../store/window';
+
+// Worker that lets sites which refuse framing (Google, GitHub…) show inside
+// Safari; see proxy/. Unset, every site is framed directly.
+const PROXY_URL = import.meta.env.VITE_SAFARI_PROXY_URL ?? '';
+const PROXY_ORIGIN = PROXY_URL ? new URL(PROXY_URL).origin : null;
 
 // Embedded sites may run scripts, submit forms and open popups, but never
 // navigate the portfolio itself (no allow-top-navigation).
@@ -26,8 +36,36 @@ const Browser = () => {
     const isOpen = useWindowStore((state) => state.windows.safari.isOpen);
     const request = useWindowStore((state) => state.windows.safari.data);
 
+    const frames = useRef(new Map());
+    const { projects } = useProjects();
+
+    // The portfolio's own projects are known to allow framing: skip the proxy for them.
+    const directHosts = useMemo(
+        () => favoritesFromProjects(projects).map((favorite) => hostnameOf(favorite.url)),
+        [projects],
+    );
+
     const tab = activeTab(browser);
     const entry = currentEntry(tab);
+
+    // A proxied page reports the real address and title it is showing, so the
+    // address bar and tab follow links clicked inside the frame.
+    useEffect(() => {
+        if (!PROXY_ORIGIN) return undefined;
+
+        const onMessage = (event) => {
+            if (event.origin !== PROXY_ORIGIN || event.data?.type !== 'safari:page') return;
+
+            const id = [...frames.current].find(([, frame]) => frame?.contentWindow === event.source)?.[0];
+            const url = normalizeAddress(event.data.url);
+
+            if (id && url) dispatch({ type: 'framed', id, url, title: String(event.data.title ?? '').slice(0, 120) });
+        };
+
+        window.addEventListener('message', onMessage);
+
+        return () => window.removeEventListener('message', onMessage);
+    }, []);
 
     // openWindow('safari', { url, title }) — e.g. from Finder — opens a new tab.
     // Each call passes a new object, so the same project twice opens twice.
@@ -61,9 +99,9 @@ const Browser = () => {
 
         // An empty address bar is not an error: just leave it.
         if (text.trim() !== '') {
-            const url = normalizeAddress(text);
+            const url = addressOrSearch(text);
 
-            open(url ? pageEntry(url) : errorEntry(text));
+            open(url ? pageEntry(url, url === normalizeAddress(text) ? undefined : text.trim()) : errorEntry(text));
         }
         input?.blur();
     };
@@ -97,9 +135,9 @@ const Browser = () => {
                         aria-label="Address"
                         placeholder="Search or enter website name"
                         spellCheck={false}
-                        value={draft ?? entry.url ?? ''}
+                        value={draft ?? entry.location ?? entry.url ?? ''}
                         onFocus={(event) => {
-                            setDraft(entry.url ?? '');
+                            setDraft(entry.location ?? entry.url ?? '');
                             event.target.select();
                         }}
                         onChange={(event) => setDraft(event.target.value)}
@@ -162,7 +200,11 @@ const Browser = () => {
                         <iframe
                             key={`${item.id}:${item.index}:${item.reloadKey}`}
                             title={itemEntry.title}
-                            src={itemEntry.url}
+                            ref={(node) => {
+                                if (node) frames.current.set(item.id, node);
+                                else frames.current.delete(item.id);
+                            }}
+                            src={frameSrc(itemEntry.url, PROXY_URL, directHosts)}
                             sandbox={IFRAME_SANDBOX}
                             allow="fullscreen"
                             referrerPolicy="strict-origin-when-cross-origin"

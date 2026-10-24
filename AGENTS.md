@@ -44,6 +44,8 @@ npm test
 npm test -- src/store/window.test.js
 npm run sounds    # regenerate public/sounds/*.wav from src/lib/synth.js
 npm run music     # regenerate the placeholder songs in public/music/
+npm run proxy:dev     # Safari proxy Worker on http://localhost:8787 (wrangler)
+npm run proxy:deploy  # publish it to Cloudflare (needs `wrangler login`)
 ```
 
 ---
@@ -64,6 +66,7 @@ src/
 ├── assets/         # Static assets
 └── index.css       # Global styles with Tailwind
 
+proxy/                # Cloudflare Worker behind Safari's browsing (src/worker.js, pure helpers in proxyUrl.js, tested)
 supabase/migrations/  # SQL schema, RLS and storage; applied by hand, in filename order
 ```
 
@@ -230,6 +233,8 @@ VITE_SUPABASE_URL
 VITE_SUPABASE_ANON_KEY
 ```
 Never import `src/lib/supabase.js` from a test: it throws without these.
+
+`VITE_SAFARI_PROXY_URL` (optional) is the deployed Safari proxy Worker (`proxy/`, a `*.workers.dev` URL). Unset, Safari frames sites directly and ones that refuse framing stay blank. The Worker must stay on its own origin (never the portfolio's) and off Vercel, whose acceptable-use policy forbids proxying; its `ALLOWED_PARENTS` (`proxy/wrangler.toml`) must list the portfolio's origins. It never forwards cookies, so don't sign in through Safari. See CLAUDE.md for how `frameSrc` and the Worker fit together.
 
 Music: songs live in the `tracks` table and the public `music` bucket (10 MB per file, 1-year `cacheControl` to protect the free plan's egress). The player reads `useSystemStore(s => s.library)`, never a constant; the `placeholderTracks` constant is only the fallback while nothing is uploaded. Pure rules are in `src/lib/musicFiles.js` (`canonicalAudioType` judges uploads by canonical MIME type, since browsers report M4A/MP3 inconsistently; `reorder` plus `renumberTracks` rewrite positions). Songs are managed in the admin Music tab (`components/admin/MusicManager.jsx`). Missing album/artist fall back to the title / "Unknown artist" through `albumTitleOf`/`artistOf` in `src/lib/music.js`; the stored values stay empty. In the admin form a cover can also be read from an MP3's ID3 tag (`src/lib/id3.js`, `src/lib/coverImage.js`) and is downscaled to about 600 px JPEG before upload. The cover reader is MP3-only; the Edit form's "Use cover from the MP3" button (shown for MP3 tracks) re-reads the cover of an existing song, fetching only its tag via Range requests.
 

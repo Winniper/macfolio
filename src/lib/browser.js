@@ -29,6 +29,61 @@ export const normalizeAddress = (input) => {
     }
 };
 
+const SEARCH_URL = 'https://html.duckduckgo.com/html/?q=';
+
+// Address-bar text -> URL: a web address, else a DuckDuckGo search for the
+// words. Only things that can't be either (javascript:, data:, …) return null.
+export const addressOrSearch = (input) => {
+    if (typeof input !== 'string') return null;
+
+    const url = normalizeAddress(input);
+
+    if (url) return url;
+
+    const value = input.trim();
+
+    // Anything with a scheme is a (rejected) address, not search words.
+    if (!value || /^[a-z][a-z\d+.-]*:/i.test(value) && !/\s/.test(value)) return null;
+
+    return `${SEARCH_URL}${encodeURIComponent(value)}`;
+};
+
+// Watch pages can't be framed, but the same video has an official embed player.
+export const youtubeEmbed = (input) => {
+    try {
+        const url = new URL(input);
+        const host = url.hostname.replace(/^(www|m)\./, '');
+        let id = null;
+
+        if (host === 'youtu.be') id = url.pathname.slice(1);
+        else if (host === 'youtube.com') {
+            if (url.pathname === '/watch') id = url.searchParams.get('v');
+            else id = /^\/(?:shorts|embed|live)\/([\w-]{6,})/.exec(url.pathname)?.[1] ?? null;
+        }
+
+        return id && /^[\w-]{6,}$/.test(id) ? `https://www.youtube-nocookie.com/embed/${id}` : null;
+    } catch {
+        return null;
+    }
+};
+
+// Sites that already allow framing load directly: no proxy bandwidth needed.
+const DIRECT_HOSTS = ['youtube-nocookie.com', 'wikipedia.org', 'wikimedia.org'];
+
+// What the tab's iframe loads. Without a proxy configured every site is
+// framed directly (blank for the ones that refuse).
+export const frameSrc = (url, proxyBase, directHosts = []) => {
+    if (!proxyBase) return url;
+
+    const embed = youtubeEmbed(url);
+    const target = embed ?? url;
+    const host = new URL(target).hostname.replace(/^www\./, '');
+
+    if ([...DIRECT_HOSTS, ...directHosts].some((direct) => host === direct || host.endsWith(`.${direct}`))) return target;
+
+    return `${proxyBase.replace(/\/+$/, '')}/${target}`;
+};
+
 export const hostnameOf = (url) => new URL(url).hostname.replace(/^www\./, '');
 
 export const FAVORITES_ENTRY = { url: null, title: 'Favorites' };
@@ -114,10 +169,25 @@ export const browserReducer = (state, action) => {
             return updateTab(state, state.activeTabId, (tab) => moveIndex(tab, 1));
 
         case 'reload':
+            // Reloading a page the visitor navigated to inside the frame reloads that page.
             return updateTab(state, state.activeTabId, (tab) => ({
                 reloadKey: tab.reloadKey + 1,
                 loading: Boolean(currentEntry(tab).url),
+                history: tab.history.map((entry, index) => (index === tab.index && entry.location
+                    ? { ...entry, url: entry.location, location: undefined }
+                    : entry)),
             }));
+
+        // The proxied page reported the real address it is showing (after a link
+        // click inside the frame). Shown in the address bar; the iframe is left alone.
+        case 'framed':
+            return state.tabs.some((tab) => tab.id === action.id)
+                ? updateTab(state, action.id, (tab) => ({
+                    history: tab.history.map((entry, index) => (index === tab.index && entry.url
+                        ? { ...entry, location: action.url, title: action.title || entry.title }
+                        : entry)),
+                }))
+                : state;
 
         case 'loaded':
             return state.tabs.some((tab) => tab.id === action.id)

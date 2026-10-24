@@ -11,7 +11,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   test: {
     // AppleDouble metadata files (._*) on the external volume would otherwise be collected as tests
-    exclude: [...configDefaults.exclude, '**/._*'],
+    exclude: [...configDefaults.exclude, '**/._*', '**/.wrangler/**'],
   },
   resolve: {
     alias: {

@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
     FAVORITES_ENTRY,
+    addressOrSearch,
+    frameSrc,
+    youtubeEmbed,
     activeTab,
     browserReducer,
     createBrowserState,
@@ -158,5 +161,82 @@ describe('browserReducer', () => {
         expect(browserReducer(state, { type: 'closeTab', id: 99 })).toBe(state);
         expect(browserReducer(state, { type: 'selectTab', id: 99 })).toBe(state);
         expect(browserReducer(state, { type: 'loaded', id: 99 })).toBe(state);
+    });
+});
+
+describe('addressOrSearch', () => {
+    it('keeps web addresses', () => {
+        expect(addressOrSearch('example.com')).toBe('https://example.com/');
+    });
+
+    it('turns plain words into a DuckDuckGo search', () => {
+        expect(addressOrSearch('react hooks')).toBe('https://html.duckduckgo.com/html/?q=react%20hooks');
+        expect(addressOrSearch('react')).toBe('https://html.duckduckgo.com/html/?q=react');
+        expect(addressOrSearch('c++ & rust?')).toBe('https://html.duckduckgo.com/html/?q=c%2B%2B%20%26%20rust%3F');
+    });
+
+    it('rejects empty input and other schemes', () => {
+        for (const bad of ['', '   ', 'javascript:alert(1)', 'data:text/html,hi', 'ftp://x.com', null, 42]) {
+            expect(addressOrSearch(bad)).toBeNull();
+        }
+    });
+});
+
+describe('youtubeEmbed', () => {
+    it('maps watch, short and youtu.be links to the privacy embed', () => {
+        const embed = 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ';
+        expect(youtubeEmbed('https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=5')).toBe(embed);
+        expect(youtubeEmbed('https://youtu.be/dQw4w9WgXcQ')).toBe(embed);
+        expect(youtubeEmbed('https://m.youtube.com/shorts/dQw4w9WgXcQ')).toBe(embed);
+    });
+
+    it('ignores other YouTube pages and other sites', () => {
+        expect(youtubeEmbed('https://www.youtube.com/')).toBeNull();
+        expect(youtubeEmbed('https://www.youtube.com/watch?v=')).toBeNull();
+        expect(youtubeEmbed('https://example.com/watch?v=abcdefgh')).toBeNull();
+        expect(youtubeEmbed('nope')).toBeNull();
+    });
+});
+
+describe('frameSrc', () => {
+    const proxy = 'https://p.workers.dev/';
+
+    it('frames directly without a proxy', () => {
+        expect(frameSrc('https://www.google.com/', '')).toBe('https://www.google.com/');
+    });
+
+    it('routes other sites through the proxy', () => {
+        expect(frameSrc('https://www.google.com/', proxy)).toBe('https://p.workers.dev/https://www.google.com/');
+    });
+
+    it('loads known framable hosts and extra direct hosts directly', () => {
+        expect(frameSrc('https://en.wikipedia.org/wiki/X', proxy)).toBe('https://en.wikipedia.org/wiki/X');
+        expect(frameSrc('https://my.app/', proxy, ['my.app'])).toBe('https://my.app/');
+    });
+
+    it('uses the YouTube embed directly', () => {
+        expect(frameSrc('https://youtu.be/dQw4w9WgXcQ', proxy)).toBe('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
+    });
+});
+
+describe('framed and reload', () => {
+    it('records the address the frame navigated to without changing the iframe url', () => {
+        let state = browserReducer(createBrowserState(), { type: 'navigate', entry: pageEntry('https://a.com/') });
+        state = browserReducer(state, { type: 'framed', id: 1, url: 'https://a.com/next', title: 'Next' });
+        const entry = currentEntry(activeTab(state));
+        expect(entry).toMatchObject({ url: 'https://a.com/', location: 'https://a.com/next', title: 'Next' });
+    });
+
+    it('ignores framed reports for the Favorites page and unknown tabs', () => {
+        const state = createBrowserState();
+        expect(currentEntry(activeTab(browserReducer(state, { type: 'framed', id: 1, url: 'https://a.com/' }))).location).toBeUndefined();
+        expect(browserReducer(state, { type: 'framed', id: 9, url: 'https://a.com/' })).toBe(state);
+    });
+
+    it('reloads the page the visitor navigated to', () => {
+        let state = browserReducer(createBrowserState(), { type: 'navigate', entry: pageEntry('https://a.com/') });
+        state = browserReducer(state, { type: 'framed', id: 1, url: 'https://a.com/next', title: 'Next' });
+        state = browserReducer(state, { type: 'reload' });
+        expect(currentEntry(activeTab(state))).toMatchObject({ url: 'https://a.com/next', location: undefined });
     });
 });
