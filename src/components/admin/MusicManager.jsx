@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Plus, Trash2, Edit2, Save, X, Play, Pause, ArrowUp, ArrowDown, Check, RefreshCw } from 'lucide-react';
 import { fetchTracks, createTrack, updateTrack, deleteTrack, renumberTracks } from '../../lib/tracksApi';
-import { validateAudio, validateCover, canonicalAudioType, reorder, TRACK_SOFT_LIMIT } from '../../lib/musicFiles';
-import { readEmbeddedCover } from '../../lib/coverImage';
+import { validateAudio, validateCover, canonicalAudioType, canReadCover, reorder, TRACK_SOFT_LIMIT } from '../../lib/musicFiles';
+import { readEmbeddedCover, readEmbeddedCoverFromUrl } from '../../lib/coverImage';
 import { formatTime, coverGradient } from '../../lib/music';
 
 const inputClass = 'w-full px-3 py-2 bg-[#1e1e1e] border border-[#3d3d3d] rounded text-white placeholder-gray-500';
 const emptyForm = { title: '', artist: '', album: '' };
-// How much of a song to fetch when looking for its cover (the ID3 tag sits at the start).
-const COVER_SCAN_BYTES = 8 * 1024 * 1024;
 
 // Reads a song's length in seconds; resolves null if the browser can't decode it.
 // Gives up (null) after PROBE_TIMEOUT_MS so a stuck decode can't block Save.
@@ -73,6 +71,7 @@ const MusicManager = () => {
     const [scanning, setScanning] = useState(false);
     const [scanNote, setScanNote] = useState(null);
     const scanId = useRef(0);
+    const editCoverManual = useRef(false);
 
     const previewRef = useRef(null);
     const successTimer = useRef(null);
@@ -228,6 +227,9 @@ const MusicManager = () => {
 
     const startEdit = (track) => {
         begin();
+        scanId.current += 1; // drops a scan still running for another track
+        setScanning(false);
+        editCoverManual.current = false;
         setEditing(track.id);
         setEditForm({ title: track.title, artist: track.artist, album: track.album });
         setEditCover(null);
@@ -241,29 +243,35 @@ const MusicManager = () => {
         setEditCover(null);
         setScanning(false);
         setScanNote(null);
+        editCoverManual.current = false;
     };
+
+    const pickEditCover = (e) => pickCover(e, (file) => {
+        editCoverManual.current = true;
+        setEditCover(file);
+    });
 
     // Fetches the start of the stored song (the ID3 tag) and takes its cover as the pending new one.
     const scanForCover = async (track) => {
         if (busy || scanning) return;
         begin();
         setScanNote(null);
+        editCoverManual.current = false;
         setScanning(true);
         const id = ++scanId.current;
         let cover = null;
         let failed = false;
         try {
-            const res = await fetch(track.src, { headers: { Range: `bytes=0-${COVER_SCAN_BYTES - 1}` } });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const blob = await res.blob();
-            cover = await readEmbeddedCover(blob.slice(0, COVER_SCAN_BYTES));
+            cover = await readEmbeddedCoverFromUrl(track.src);
         } catch (err) {
             console.error('Could not read the song for a cover:', err);
             failed = true;
         }
         if (scanId.current !== id) return;
         setScanning(false);
-        if (cover) setEditCover(cover);
+        if (cover) {
+            if (!editCoverManual.current) setEditCover(cover);
+        }
         else setScanNote(failed ? 'Could not read this file.' : 'No cover found in this file.');
     };
 
@@ -485,20 +493,20 @@ const MusicManager = () => {
                                     <input
                                         type="file"
                                         accept="image/jpeg,image/png,image/webp"
-                                        onChange={(e) => pickCover(e, setEditCover)}
-                                        disabled={busy}
+                                        onChange={pickEditCover}
+                                        disabled={busy || scanning}
                                         className="block w-full text-sm text-gray-400"
                                     />
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <button
+                                    {canReadCover(track) && <button
                                         type="button"
                                         onClick={() => scanForCover(track)}
                                         disabled={busy || scanning}
                                         className="px-3 py-1.5 bg-[#3d3d3d] hover:bg-[#4d4d4d] text-white text-sm rounded transition-colors disabled:opacity-50"
                                     >
                                         {scanning ? 'Looking…' : 'Use cover from the MP3'}
-                                    </button>
+                                    </button>}
                                     {scanNote && <span className="text-gray-400 text-sm">{scanNote}</span>}
                                 </div>
                                 <div className="flex gap-2">
@@ -556,7 +564,7 @@ const MusicManager = () => {
                                     >
                                         <ArrowDown size={16} />
                                     </button>
-                                    <button onClick={() => startEdit(track)} disabled={busy} aria-label="Edit" className={iconButton}>
+                                    <button onClick={() => startEdit(track)} disabled={busy || scanning} aria-label="Edit" className={iconButton}>
                                         <Edit2 size={16} />
                                     </button>
                                     <button

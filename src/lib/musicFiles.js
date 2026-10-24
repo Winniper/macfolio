@@ -32,6 +32,9 @@ const validate = (file, isAllowed, typeMessage) => {
     return null;
 };
 
+// Only MP3 files carry the ID3 tag the cover reader understands.
+export const canReadCover = (track) => canonicalAudioType({ name: track?.audioPath }) === 'audio/mpeg';
+
 export const validateAudio = (file) => validate(file, canonicalAudioType, 'Songs must be MP3, M4A or AAC audio.');
 
 export const validateCover = (file) => validate(file, (f) => COVER_TYPES.includes(f.type), 'Covers must be JPEG, PNG or WebP images.');

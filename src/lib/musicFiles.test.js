@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-    MAX_TRACK_BYTES, TRACK_SOFT_LIMIT, canonicalAudioType, libraryOrPlaceholders, reorder, trackFilePath, validateAudio, validateCover,
+    MAX_TRACK_BYTES, TRACK_SOFT_LIMIT, canReadCover, canonicalAudioType, libraryOrPlaceholders, reorder, trackFilePath, validateAudio, validateCover,
 } from './musicFiles';
 
 const file = (type, size) => ({ type, size, name: 'x' });
@@ -103,5 +103,16 @@ describe('libraryOrPlaceholders', () => {
     it('falls back to the placeholders when the library is empty or missing', () => {
         expect(libraryOrPlaceholders([], placeholders)).toBe(placeholders);
         expect(libraryOrPlaceholders(null, placeholders)).toBe(placeholders);
+    });
+});
+
+describe('canReadCover', () => {
+    it('is true only for MP3 audio paths', () => {
+        expect(canReadCover({ audioPath: 'audio/1-ab.mp3' })).toBe(true);
+        expect(canReadCover({ audioPath: 'audio/1-ab.MP3' })).toBe(true);
+        expect(canReadCover({ audioPath: 'audio/1-ab.m4a' })).toBe(false);
+        expect(canReadCover({ audioPath: 'audio/1-ab.aac' })).toBe(false);
+        expect(canReadCover({})).toBe(false);
+        expect(canReadCover(null)).toBe(false);
     });
 });

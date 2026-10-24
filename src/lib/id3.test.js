@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { extractId3Cover, id3TagLength } from './id3';
+import { extractId3Cover, id3TagLength, imageDimensions } from './id3';
 
 const enc = (s) => Array.from(s, (c) => c.charCodeAt(0));
 const PNG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3];
@@ -178,6 +178,36 @@ describe('extractId3Cover', () => {
         expect(Array.from(extractId3Cover(real).data)).toEqual(image);
     });
 
+    const stuff = (arr) => arr.flatMap((b, i) => (b === 0xff && (i === arr.length - 1 || arr[i + 1] === 0 || arr[i + 1] >= 0xe0) ? [b, 0] : [b]));
+    const jpegImage = [0xff, 0xd8, 0xff, 0x00, 0xe0, 1, 0xff, 0xe1];
+
+    it('v2.4 header unsync: frame sizes count the stuffed bytes, later frames stay aligned', () => {
+        const body = stuff(apicBody({ mime: 'image/jpeg', image: jpegImage }));
+        const first = frame(4, 'APIC', body, [0, 0]);
+        const second = frame(4, 'APIC', apicBody({ type: 3, image: PNG }), [0, 0]);
+        const t = tag({ version: 4, flags: 0x80, frames: [first, second] });
+        expect(Array.from(extractId3Cover(t).data)).toEqual(jpegImage);
+        const other = frame(4, 'APIC', stuff(apicBody({ type: 0, mime: 'image/jpeg', image: jpegImage })));
+        const t2 = tag({ version: 4, flags: 0x80, frames: [other, second] });
+        expect(Array.from(extractId3Cover(t2).data)).toEqual(PNG);
+    });
+
+    it('v2.4 per-frame unsync flag decodes only that frame', () => {
+        const flagged = frame(4, 'APIC', stuff(apicBody({ type: 0, mime: 'image/jpeg', image: jpegImage })), [0, 0x02]);
+        const plain = frame(4, 'APIC', apicBody({ type: 3, image: PNG }));
+        expect(Array.from(extractId3Cover(tag({ version: 4, frames: [flagged] })).data)).toEqual(jpegImage);
+        expect(Array.from(extractId3Cover(tag({ version: 4, frames: [flagged, plain] })).data)).toEqual(PNG);
+    });
+
+    it('falls back to plain uint32 sizes in v2.4 when the size is not syncsafe', () => {
+        const big = [0xff, 0xd8, 0xff, ...new Array(230).fill(7)];
+        const body = apicBody({ mime: 'image/jpeg', image: big });
+        const f = [...enc('APIC'), ...be32(body.length), 0, 0, ...body]; // 0x0000014? has bit 7 set in low byte
+        expect(body.length & 0x80).toBeTruthy(); // not a valid syncsafe size
+        const t = tag({ version: 4, frames: [f, text(4, 'TIT2', 'x')] });
+        expect(extractId3Cover(t).data.length).toBe(big.length);
+    });
+
     it('reads ID3v2.2 PIC frames', () => {
         const pic = (fmt) => [0, ...enc(fmt), 3, 0, ...(fmt === 'PNG' ? PNG : JPEG)];
         const f = (body) => [...enc('PIC'), (body.length >> 16) & 255, (body.length >> 8) & 255, body.length & 255, ...body];
@@ -220,5 +250,21 @@ describe('extractId3Cover', () => {
         expect(extractId3Cover(t)).toBeNull();
         const t2 = tag({ frames: [frame(3, 'APIC', [0, ...enc('image/png'), 0, 3, ...enc('desc')])] });
         expect(extractId3Cover(t2)).toBeNull();
+    });
+});
+
+describe('imageDimensions', () => {
+    it('reads PNG IHDR', () => {
+        const png = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, ...enc('IHDR'), 0, 0, 2, 0, 0, 0, 1, 0x80, 8, 6, 0, 0, 0];
+        expect(imageDimensions(new Uint8Array(png))).toEqual({ width: 512, height: 384 });
+    });
+    it('reads the JPEG SOF marker, skipping other segments', () => {
+        const jpg = [0xff, 0xd8, 0xff, 0xe0, 0, 4, 1, 2, 0xff, 0xc4, 0, 3, 9, 0xff, 0xc0, 0, 11, 8, 0x03, 0x20, 0x04, 0xb0, 3, 0, 0, 0];
+        expect(imageDimensions(new Uint8Array(jpg))).toEqual({ width: 1200, height: 800 });
+    });
+    it('returns null for unknown, truncated or empty data', () => {
+        expect(imageDimensions(new Uint8Array(0))).toBeNull();
+        expect(imageDimensions(new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 4]))).toBeNull();
+        expect(imageDimensions(new Uint8Array(40))).toBeNull();
     });
 });

@@ -23,13 +23,43 @@ export const id3TagLength = (header) => {
     return 10 + syncsafe(header, 6) + footer;
 };
 
+// Reverses unsynchronisation (FF 00 -> FF) in one typed-array pass.
 const unsynchronise = (bytes) => {
-    const out = [];
+    const out = new Uint8Array(bytes.length);
+    let n = 0;
     for (let i = 0; i < bytes.length; i++) {
-        out.push(bytes[i]);
+        out[n++] = bytes[i];
         if (bytes[i] === 0xff && bytes[i + 1] === 0) i++;
     }
-    return Uint8Array.from(out);
+    return out.subarray(0, n);
+};
+
+// Width and height of a PNG or JPEG from its header bytes, or null (also for WebP).
+export const imageDimensions = (d) => {
+    try {
+        if (d.length >= 24 && d[0] === 0x89 && d[1] === 0x50 && d[2] === 0x4e && d[3] === 0x47) {
+            return { width: uint32(d, 16), height: uint32(d, 20) };
+        }
+        if (d.length >= 4 && d[0] === 0xff && d[1] === 0xd8) {
+            let i = 2;
+            while (i + 4 <= d.length) {
+                if (d[i] !== 0xff) { i++; continue; }
+                const marker = d[i + 1];
+                if (marker === 0xff) { i++; continue; }
+                if (marker === 0xd8 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) { i += 2; continue; }
+                const len = (d[i + 2] << 8) | d[i + 3];
+                if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
+                    if (i + 9 > d.length) return null;
+                    return { height: (d[i + 5] << 8) | d[i + 6], width: (d[i + 7] << 8) | d[i + 8] };
+                }
+                if (len < 2) return null;
+                i += 2 + len;
+            }
+        }
+    } catch {
+        return null;
+    }
+    return null;
 };
 
 const KNOWN_MIMES = ['image/png', 'image/jpeg', 'image/webp'];
@@ -96,7 +126,15 @@ export const extractId3Cover = (bytes) => {
         const footer = version === 4 && (flags & 0x10) ? 10 : 0;
         const tagEnd = Math.min(total - footer, bytes.length);
         let b = bytes.subarray(0, tagEnd);
-        if (flags & 0x80) b = Uint8Array.from([...b.subarray(0, 10), ...unsynchronise(b.subarray(10))]);
+        // Before v2.4 the header flag covers the whole body; in v2.4 it is applied per frame below.
+        if (version < 4 && (flags & 0x80)) {
+            const body = unsynchronise(b.subarray(10));
+            const joined = new Uint8Array(10 + body.length);
+            joined.set(b.subarray(0, 10));
+            joined.set(body, 10);
+            b = joined;
+        }
+        const headerUnsync = version === 4 && (flags & 0x80) !== 0;
 
         let pos = 10;
         if (version >= 3 && (flags & 0x40)) {
@@ -113,11 +151,13 @@ export const extractId3Cover = (bytes) => {
             const id = latin1(b, pos, pos + (legacy ? 3 : 4));
             const size = legacy
                 ? (b[pos + 3] << 16) | (b[pos + 4] << 8) | b[pos + 5]
-                : version === 4 ? syncsafe(b, pos + 4) : uint32(b, pos + 4);
+                : version === 4 && isSyncsafe(b, pos + 4) ? syncsafe(b, pos + 4) : uint32(b, pos + 4);
             const fl2 = legacy ? 0 : b[pos + 9];
             let start = pos + headerSize;
             const end = start + size;
             if (end > b.length) break;
+            let payload = b;
+            let payloadEnd = end;
 
             if (id === wanted) {
                 let usable = true;
@@ -126,11 +166,17 @@ export const extractId3Cover = (bytes) => {
                     else if (fl2 & 0x20) start += 1; // grouping id
                 } else if (version === 4) {
                     if (fl2 & 0x0c) usable = false; // compressed / encrypted
+                    if (headerUnsync || (fl2 & 0x02)) {
+                        // Sizes count the stuffed bytes, so decode just this frame's payload.
+                        payload = unsynchronise(b.subarray(start, end));
+                        start = 0;
+                        payloadEnd = payload.length;
+                    }
                     if (fl2 & 0x40) start += 1; // grouping id
                     if (fl2 & 0x01) start += 4; // data length indicator
                 }
-                if (usable && start < end) {
-                    const pic = parsePicture(b, start, end, legacy);
+                if (usable && start < payloadEnd) {
+                    const pic = parsePicture(payload, start, payloadEnd, legacy);
                     if (pic) {
                         if (pic.type === 3) return { mime: pic.mime, data: pic.data };
                         if (!first) first = pic;
