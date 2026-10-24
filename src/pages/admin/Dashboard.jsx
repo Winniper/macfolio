@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, FolderOpen, Cpu, FileText } from 'lucide-react';
+import { LogOut, FolderOpen, Cpu, FileText, Music } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import ProjectsManager from '../../components/admin/ProjectsManager';
 import SkillsManager from '../../components/admin/SkillsManager';
+import MusicManager from '../../components/admin/MusicManager';
 import ResumeUploader from '../../components/admin/ResumeUploader';
 
 const tabs = [
     { id: 'projects', label: 'Projects', icon: FolderOpen },
     { id: 'skills', label: 'Skills', icon: Cpu },
-    { id: 'resume', label: 'Resume', icon: FileText },
+    { id: 'music', label: 'Music', icon: Music },
+    { id: 'resume', label: 'Resume', icon: FileText, Music },
 ];
 
 const Dashboard = () => {
@@ -28,6 +30,8 @@ const Dashboard = () => {
                 return <ProjectsManager />;
             case 'skills':
                 return <SkillsManager />;
+            case 'music':
+                return <MusicManager />;
             case 'resume':
                 return <ResumeUploader />;
             default:
