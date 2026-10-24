@@ -3,7 +3,7 @@ import { readFileSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { PIECES, renderPiece } from './musicSynth';
 import { SAMPLE_RATE, encodeWav } from './synth';
-import { tracks } from '../constants';
+import { placeholderTracks as tracks } from '../constants';
 
 const filePath = (src) => fileURLToPath(new URL(`../../public${src}`, import.meta.url));
 

@@ -60,7 +60,7 @@ src/
 ├── context/        # React Context (AuthContext.jsx)
 ├── hoc/            # Higher-order components (WindowWrapper.jsx)
 ├── constants/      # Static data and configuration (index.js)
-├── lib/            # External service configs (supabase.js, the data APIs)
+├── lib/            # External service configs (supabase.js, the data APIs: projectsApi, skillsApi, resumeApi, tracksApi)
 ├── assets/         # Static assets
 └── index.css       # Global styles with Tailwind
 
@@ -218,7 +218,7 @@ import { Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
 {error && <AlertTriangle />}
 ```
 
-A Supabase list shared by several windows goes through `createFetchStore` (`src/lib/fetchStore.js`) with a hook in `src/hooks/` (`useProjects`, `useSkills`); components still render the same loading, error and retry UI.
+A Supabase list shared by several windows goes through `createFetchStore` (`src/lib/fetchStore.js`) with a hook in `src/hooks/` (`useProjects`, `useSkills`; the song list `store/tracks.js` feeds `system.library` through `useTrackLibrary` instead of rendering its own UI); components still render the same loading, error and retry UI.
 
 ---
 
@@ -230,6 +230,8 @@ VITE_SUPABASE_URL
 VITE_SUPABASE_ANON_KEY
 ```
 Never import `src/lib/supabase.js` from a test: it throws without these.
+
+Music: songs live in the `tracks` table and the public `music` bucket (10 MB per file, 1-year `cacheControl` to protect the free plan's egress). The player reads `useSystemStore(s => s.library)`, never a constant; the `placeholderTracks` constant is only the fallback while nothing is uploaded. Pure rules are in `src/lib/musicFiles.js`.
 
 Setup outside the repo: add an admin by creating the user in the Supabase dashboard, then `insert into public.admins (user_id) …` with their auth user id. "Allow new users to sign up" must stay off. Vercel needs `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Apply `supabase/migrations/` by hand (dashboard SQL editor or MCP), in filename order.
 

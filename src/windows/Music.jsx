@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Disc3, ListMusic, Pause, Play, Radio, SkipBack, SkipForward, Volume1, Volume2 } from 'lucide-react';
 
-import { tracks } from '../constants';
 import WindowControls from '../components/WindowControl';
 import WindowWrapper from '../hoc/WindowWrapper';
 import { albumsOf, coverGradient, formatTime, trackById } from '../lib/music';
@@ -19,12 +18,13 @@ const Cover = ({ title, cover, size }) => (
 // Transport, LCD (cover, title, scrubber) and volume; doubles as the title bar.
 const PlayerBar = () => {
     const audio = useSystemStore((state) => state.audio);
+    const library = useSystemStore((state) => state.library);
     const togglePlay = useSystemStore((state) => state.togglePlay);
     const nextTrack = useSystemStore((state) => state.nextTrack);
     const previousTrack = useSystemStore((state) => state.previousTrack);
     const seekTo = useSystemStore((state) => state.seekTo);
     const setVolume = useSystemStore((state) => state.setVolume);
-    const track = trackById(tracks, audio.currentTrackId);
+    const track = trackById(library, audio.currentTrackId);
     const duration = audio.duration || track?.duration || 0;
     const position = Math.min(audio.position, duration);
 
@@ -133,7 +133,8 @@ const LIBRARY = [
 const Music = () => {
     const playTrack = useSystemStore((state) => state.playTrack);
     const [view, setView] = useState({ id: 'listenNow' });
-    const albums = useMemo(() => albumsOf(tracks), []);
+    const tracks = useSystemStore((state) => state.library);
+    const albums = useMemo(() => albumsOf(tracks), [tracks]);
     const openAlbum = (title) => setView({ id: 'album', album: title });
     const album = albums.find((entry) => entry.title === view.album);
 

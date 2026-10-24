@@ -1,17 +1,19 @@
 import { useEffect, useRef } from 'react';
 
-import { tracks } from '../../constants';
+import useTrackLibrary from '../../hooks/useTrackLibrary';
 import { nowPlayingNotification, trackById } from '../../lib/music';
 import useSystemStore from '../../store/system';
 import useWindowStore from '../../store/window';
 
 const audioState = () => useSystemStore.getState().audio;
+const libraryState = () => useSystemStore.getState().library;
 
 // Owns the only <audio> element. The store is the source of truth: this
 // mirrors it into the element (source, play/pause, volume, seeks) and mirrors
 // the element's clock back (position, duration, end of track). The element's
 // own `pause` event is deliberately ignored — changing `src` fires it.
 const AudioController = () => {
+    useTrackLibrary();
     const audioRef = useRef(null);
     const announcedRef = useRef(null);
     const currentTrackId = useSystemStore((state) => state.audio.currentTrackId);
@@ -21,7 +23,7 @@ const AudioController = () => {
 
     useEffect(() => {
         const element = audioRef.current;
-        const track = trackById(tracks, currentTrackId);
+        const track = trackById(libraryState(), currentTrackId);
         if (!element || !track) return;
 
         element.src = track.src;
@@ -60,7 +62,7 @@ const AudioController = () => {
         announcedRef.current = currentTrackId;
         if (useWindowStore.getState().windows.music?.isOpen) return;
 
-        const track = trackById(tracks, currentTrackId);
+        const track = trackById(libraryState(), currentTrackId);
         if (track) useSystemStore.getState().notify(nowPlayingNotification(track));
     }, [isPlaying, currentTrackId]);
 
@@ -95,7 +97,7 @@ const AudioController = () => {
 
     useEffect(() => {
         const session = globalThis.navigator?.mediaSession;
-        const track = trackById(tracks, currentTrackId);
+        const track = trackById(libraryState(), currentTrackId);
         if (!session || !track || typeof globalThis.MediaMetadata !== 'function') return;
 
         session.metadata = new globalThis.MediaMetadata({ title: track.title, artist: track.artist, album: track.album });

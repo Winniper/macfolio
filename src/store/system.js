@@ -5,13 +5,15 @@ import { initialBootPhase, isSmallScreen, markBootSeen, readBootSeen } from '../
 import { missionControlLayout } from '../lib/missionControl';
 import { HISTORY_LIMIT, addNotification, createNotification } from '../lib/notifications';
 import useWindowStore from './window';
-import { tracks } from '../constants';
+import { placeholderTracks } from '../constants';
 import { adjacentTrackId, clampVolume, trackById } from '../lib/music';
 
 // OS-level state that isn't about a single window: boot phase, Mission Control, Spotlight, Control Center (brightness, Focus), notifications and their history, the sound-effects switch, music playback and the desktop Clean Up counter.
 export const createInitialSystemState = () => ({
   bootPhase: initialBootPhase({ bootSeen: readBootSeen(), smallScreen: isSmallScreen() }),
   missionControl: null,
+  // The songs the player uses: the placeholders until the live library loads.
+  library: placeholderTracks,
   audio: { currentTrackId: null, isPlaying: false, volume: 0.6, position: 0, duration: 0, seekNonce: 0 },
   spotlightOpen: false,
   controlCenterOpen: false,
@@ -155,17 +157,30 @@ const useSystemStore = create(
         state.soundEffects = Boolean(on);
       }),
 
+    // Swaps in the live library. The current song survives if it is still in
+    // the list; otherwise playback stops and nothing is loaded.
+    setLibrary: (list) =>
+      set((state) => {
+        state.library = list;
+        if (state.audio.currentTrackId && !trackById(list, state.audio.currentTrackId)) {
+          state.audio.currentTrackId = null;
+          state.audio.isPlaying = false;
+          state.audio.position = 0;
+          state.audio.duration = 0;
+        }
+      }),
+
     // Music. The store is the source of truth; AudioController mirrors it into
     // the single <audio> element. Only lock leaves the music playing; restart stops it.
     playTrack: (id) =>
       set((state) => {
-        if (trackById(tracks, id)) loadTrack(state, id, true);
+        if (trackById(state.library, id)) loadTrack(state, id, true);
       }),
 
     togglePlay: () =>
       set((state) => {
         if (!state.audio.currentTrackId) {
-          if (tracks[0]) loadTrack(state, tracks[0].id, true);
+          if (state.library[0]) loadTrack(state, state.library[0].id, true);
           return;
         }
         state.audio.isPlaying = !state.audio.isPlaying;
@@ -182,7 +197,7 @@ const useSystemStore = create(
         const { currentTrackId, isPlaying } = state.audio;
         if (!currentTrackId) return;
 
-        const next = adjacentTrackId(tracks, currentTrackId, 1);
+        const next = adjacentTrackId(state.library, currentTrackId, 1);
         if (next) {
           loadTrack(state, next, isPlaying);
         } else {
@@ -196,7 +211,7 @@ const useSystemStore = create(
         const { currentTrackId, position, isPlaying } = state.audio;
         if (!currentTrackId) return;
 
-        const previous = position > 3 ? null : adjacentTrackId(tracks, currentTrackId, -1);
+        const previous = position > 3 ? null : adjacentTrackId(state.library, currentTrackId, -1);
         if (previous) loadTrack(state, previous, isPlaying);
         else rewind(state);
       }),

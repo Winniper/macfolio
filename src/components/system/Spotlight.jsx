@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
 
-import { tracks } from '../../constants';
 import useProjects from '../../hooks/useProjects';
 import useSkills from '../../hooks/useSkills';
 import { runMenuAction } from '../../lib/menuActions';
@@ -14,6 +13,7 @@ const isMac = isMacPlatform(getPlatform());
 // The panel mounts only while open, so every open starts with an empty query.
 const SpotlightPanel = () => {
     const closeSpotlight = useSystemStore((state) => state.closeSpotlight);
+    const tracks = useSystemStore((state) => state.library);
     const { projects } = useProjects();
     const { skills } = useSkills();
     const [query, setQuery] = useState('');
@@ -21,7 +21,7 @@ const SpotlightPanel = () => {
     const panelRef = useRef(null);
 
     // A failed fetch leaves an empty list, so apps are still found.
-    const index = useMemo(() => buildSpotlightIndex({ projects, skills, tracks }), [projects, skills]);
+    const index = useMemo(() => buildSpotlightIndex({ projects, skills, tracks }), [projects, skills, tracks]);
     const groups = useMemo(() => searchSpotlight(index, query), [index, query]);
     const results = flattenResults(groups);
     const active = Math.min(selected, Math.max(results.length - 1, 0));

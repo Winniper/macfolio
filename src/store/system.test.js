@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import useSystemStore, { createInitialSystemState, isDesktopPhase } from './system';
 import useWindowStore, { createInitialWindowState } from './window';
-import { tracks } from '../constants';
+import { placeholderTracks as tracks } from '../constants';
 
 const system = () => useSystemStore.getState();
 const windows = () => useWindowStore.getState();
@@ -400,5 +400,41 @@ describe('Control Center', () => {
         expect(system().notificationHistory).toHaveLength(10);
         system().clearNotificationHistory();
         expect(system().notificationHistory).toEqual([]);
+    });
+});
+
+describe('music library', () => {
+    const [first, second] = tracks;
+    const uploaded = [{ id: 'u1', title: 'Mine', artist: 'Me', album: 'LP', cover: null, src: '/u1.mp3', duration: 90 }];
+
+    it('starts with the placeholder songs', () => {
+        expect(system().library).toEqual(tracks);
+    });
+
+    it('keeps the current track when it is still in the new list', () => {
+        system().playTrack(second.id);
+        system().setLibrary([first, second]);
+        expect(system().audio).toMatchObject({ currentTrackId: second.id, isPlaying: true });
+    });
+
+    it('stops and clears the current track when it disappears', () => {
+        system().playTrack(second.id);
+        system().setLibrary(uploaded);
+        expect(system().library).toEqual(uploaded);
+        expect(system().audio).toMatchObject({ currentTrackId: null, isPlaying: false });
+    });
+
+    it('plays from the new library', () => {
+        system().setLibrary(uploaded);
+        system().playTrack(first.id);
+        expect(system().audio.currentTrackId).toBeNull();
+        system().togglePlay();
+        expect(system().audio).toMatchObject({ currentTrackId: 'u1', isPlaying: true });
+    });
+
+    it('leaves playback alone when nothing is loaded', () => {
+        system().setLibrary([]);
+        system().togglePlay();
+        expect(system().audio).toMatchObject({ currentTrackId: null, isPlaying: false });
     });
 });

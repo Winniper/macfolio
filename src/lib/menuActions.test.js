@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { runMenuAction } from './menuActions';
 import useWindowStore, { createInitialWindowState } from '../store/window';
 import useSystemStore, { createInitialSystemState } from '../store/system';
-import { tracks } from '../constants';
+import { placeholderTracks as tracks } from '../constants';
 
 const windows = () => useWindowStore.getState();
 const system = () => useSystemStore.getState();

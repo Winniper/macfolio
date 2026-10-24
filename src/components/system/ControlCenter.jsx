@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { BellRing, Bluetooth, Moon, Pause, Play, Radio, SkipBack, SkipForward, Sun, Volume2, Wifi } from 'lucide-react';
 
-import { tracks } from '../../constants';
 import { getApp } from '../../constants/apps';
 import { runMenuAction } from '../../lib/menuActions';
 import { coverGradient, trackById } from '../../lib/music';
@@ -43,6 +42,7 @@ const ControlCenterPanel = () => {
     const soundEffects = useSystemStore((state) => state.soundEffects);
     const setSoundEffects = useSystemStore((state) => state.setSoundEffects);
     const audio = useSystemStore((state) => state.audio);
+    const library = useSystemStore((state) => state.library);
     const setVolume = useSystemStore((state) => state.setVolume);
     const togglePlay = useSystemStore((state) => state.togglePlay);
     const nextTrack = useSystemStore((state) => state.nextTrack);
@@ -51,7 +51,7 @@ const ControlCenterPanel = () => {
     const clearNotificationHistory = useSystemStore((state) => state.clearNotificationHistory);
     // Decorative, like the spec says: they only flip their look.
     const [radios, setRadios] = useState({ wifi: true, bluetooth: true, airdrop: false });
-    const track = trackById(tracks, audio.currentTrackId);
+    const track = trackById(library, audio.currentTrackId);
 
     // Close on a press outside (the menu-bar icon toggles on its own), Esc, or leaving the page.
     useEffect(() => {

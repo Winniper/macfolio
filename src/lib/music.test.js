@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
     adjacentTrackId, albumsOf, clampVolume, coverGradient, formatTime, nowPlayingNotification, trackById,
 } from './music';
-import { tracks } from '../constants';
+import { placeholderTracks as tracks } from '../constants';
 
 const list = [
     { id: 'a', title: 'A', artist: 'X', album: 'One', cover: null },
