@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Plus, Trash2, Edit2, Save, X, Play, Pause, ArrowUp, ArrowDown, Check, RefreshCw } from 'lucide-react';
 import { fetchTracks, createTrack, updateTrack, deleteTrack, renumberTracks } from '../../lib/tracksApi';
-import { validateAudio, validateCover, reorder, TRACK_SOFT_LIMIT } from '../../lib/musicFiles';
+import { validateAudio, validateCover, canonicalAudioType, reorder, TRACK_SOFT_LIMIT } from '../../lib/musicFiles';
+import { readEmbeddedCover } from '../../lib/coverImage';
 import { formatTime, coverGradient } from '../../lib/music';
 
 const inputClass = 'w-full px-3 py-2 bg-[#1e1e1e] border border-[#3d3d3d] rounded text-white placeholder-gray-500';
 const emptyForm = { title: '', artist: '', album: '' };
+// How much of a song to fetch when looking for its cover (the ID3 tag sits at the start).
+const COVER_SCAN_BYTES = 8 * 1024 * 1024;
 
 // Reads a song's length in seconds; resolves null if the browser can't decode it.
 // Gives up (null) after PROBE_TIMEOUT_MS so a stuck decode can't block Save.
@@ -57,12 +60,19 @@ const MusicManager = () => {
     const [probing, setProbing] = useState(false);
     const probeFile = useRef(null);
     const [coverFile, setCoverFile] = useState(null);
+    const [coverSource, setCoverSource] = useState(null); // 'manual' | 'embedded' | null
+    const [lookingForCover, setLookingForCover] = useState(false);
+    const [coverInputKey, setCoverInputKey] = useState(0);
+    const coverSourceRef = useRef(null);
     const coverPreview = useObjectUrl(coverFile);
 
     const [editing, setEditing] = useState(null);
     const [editForm, setEditForm] = useState(emptyForm);
     const [editCover, setEditCover] = useState(null);
     const editPreview = useObjectUrl(editCover);
+    const [scanning, setScanning] = useState(false);
+    const [scanNote, setScanNote] = useState(null);
+    const scanId = useRef(0);
 
     const previewRef = useRef(null);
     const successTimer = useRef(null);
@@ -127,6 +137,17 @@ const MusicManager = () => {
         });
     };
 
+    const setAddCover = (file, source) => {
+        coverSourceRef.current = source;
+        setCoverSource(source);
+        setCoverFile(file);
+    };
+
+    const clearCover = () => {
+        setAddCover(null, null);
+        setCoverInputKey((k) => k + 1);
+    };
+
     const resetAddForm = () => {
         setShowForm(false);
         setForm(emptyForm);
@@ -134,7 +155,8 @@ const MusicManager = () => {
         setDuration(null);
         setProbing(false);
         probeFile.current = null;
-        setCoverFile(null);
+        setLookingForCover(false);
+        clearCover();
     };
 
     const pickAudio = async (e) => {
@@ -153,11 +175,21 @@ const MusicManager = () => {
         setDuration(null);
         setProbing(true);
         probeFile.current = file;
+        // A cover found in an earlier song's tag does not carry over to this one.
+        if (coverSourceRef.current === 'embedded') clearCover();
+        const lookup = canonicalAudioType(file) === 'audio/mpeg';
+        setLookingForCover(lookup);
+        const coverPromise = lookup ? readEmbeddedCover(file) : Promise.resolve(null);
         const seconds = await readDuration(file);
         // A newer pick (or a reset) owns the form now; drop this stale result.
         if (probeFile.current !== file) return;
         setDuration(seconds);
         setProbing(false);
+        const embedded = await coverPromise;
+        if (probeFile.current !== file) return;
+        setLookingForCover(false);
+        // A cover the admin chose by hand wins over the one in the file.
+        if (embedded && coverSourceRef.current !== 'manual') setAddCover(embedded, 'embedded');
     };
 
     const pickCover = (e, setter) => {
@@ -174,8 +206,10 @@ const MusicManager = () => {
         setter(file);
     };
 
+    const pickAddCover = (e) => pickCover(e, (file) => setAddCover(file, 'manual'));
+
     const handleAdd = async () => {
-        if (!audioFile || !form.title.trim() || busy || probing) return;
+        if (!audioFile || !form.title.trim() || busy || probing || lookingForCover) return;
         begin();
         setBusy(true);
         try {
@@ -197,12 +231,40 @@ const MusicManager = () => {
         setEditing(track.id);
         setEditForm({ title: track.title, artist: track.artist, album: track.album });
         setEditCover(null);
+        setScanNote(null);
     };
 
     const stopEdit = () => {
+        scanId.current += 1; // drops an in-flight cover scan
         setEditing(null);
         setEditForm(emptyForm);
         setEditCover(null);
+        setScanning(false);
+        setScanNote(null);
+    };
+
+    // Fetches the start of the stored song (the ID3 tag) and takes its cover as the pending new one.
+    const scanForCover = async (track) => {
+        if (busy || scanning) return;
+        begin();
+        setScanNote(null);
+        setScanning(true);
+        const id = ++scanId.current;
+        let cover = null;
+        let failed = false;
+        try {
+            const res = await fetch(track.src, { headers: { Range: `bytes=0-${COVER_SCAN_BYTES - 1}` } });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const blob = await res.blob();
+            cover = await readEmbeddedCover(blob.slice(0, COVER_SCAN_BYTES));
+        } catch (err) {
+            console.error('Could not read the song for a cover:', err);
+            failed = true;
+        }
+        if (scanId.current !== id) return;
+        setScanning(false);
+        if (cover) setEditCover(cover);
+        else setScanNote(failed ? 'Could not read this file.' : 'No cover found in this file.');
     };
 
     const handleUpdate = async (track) => {
@@ -327,13 +389,28 @@ const MusicManager = () => {
                         <div className="flex items-center gap-3">
                             {coverPreview && <Art src={coverPreview} seed="" />}
                             <input
+                                key={coverInputKey}
                                 type="file"
                                 accept="image/jpeg,image/png,image/webp"
-                                onChange={(e) => pickCover(e, setCoverFile)}
+                                onChange={pickAddCover}
                                 disabled={busy}
                                 className="block w-full text-sm text-gray-400"
                             />
                         </div>
+                        {lookingForCover && <p className="mt-1 text-gray-500 text-sm">Looking for a cover…</p>}
+                        {coverFile && (
+                            <p className="mt-1 text-gray-500 text-sm">
+                                {coverSource === 'embedded' && <>Cover found in the file{' · '}</>}
+                                <button
+                                    type="button"
+                                    onClick={clearCover}
+                                    disabled={busy}
+                                    className="text-blue-400 hover:underline disabled:opacity-50"
+                                >
+                                    Remove cover
+                                </button>
+                            </p>
+                        )}
                     </div>
                     <input
                         type="text"
@@ -359,10 +436,10 @@ const MusicManager = () => {
                     <div className="flex gap-2">
                         <button
                             onClick={handleAdd}
-                            disabled={busy || probing || !audioFile || !form.title.trim()}
+                            disabled={busy || probing || lookingForCover || !audioFile || !form.title.trim()}
                             className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {busy ? 'Uploading…' : probing ? 'Reading length…' : 'Save'}
+                            {busy ? 'Uploading…' : probing ? 'Reading length…' : lookingForCover ? 'Looking for a cover…' : 'Save'}
                         </button>
                         <button
                             onClick={resetAddForm}
@@ -413,10 +490,21 @@ const MusicManager = () => {
                                         className="block w-full text-sm text-gray-400"
                                     />
                                 </div>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => scanForCover(track)}
+                                        disabled={busy || scanning}
+                                        className="px-3 py-1.5 bg-[#3d3d3d] hover:bg-[#4d4d4d] text-white text-sm rounded transition-colors disabled:opacity-50"
+                                    >
+                                        {scanning ? 'Looking…' : 'Use cover from the MP3'}
+                                    </button>
+                                    {scanNote && <span className="text-gray-400 text-sm">{scanNote}</span>}
+                                </div>
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => handleUpdate(track)}
-                                        disabled={busy || !editForm.title.trim()}
+                                        disabled={busy || scanning || !editForm.title.trim()}
                                         aria-label="Save"
                                         className="p-2 bg-green-600 hover:bg-green-700 text-white rounded disabled:opacity-50"
                                     >
