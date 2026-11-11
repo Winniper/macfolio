@@ -2,7 +2,11 @@ import { describe, it, expect } from 'vitest';
 import {
     FAVORITES_ENTRY,
     addressOrSearch,
+    blockedEntry,
     frameSrc,
+    isBlockedHost,
+    rerouteSearch,
+    resolveEntry,
     youtubeEmbed,
     activeTab,
     browserReducer,
@@ -13,6 +17,7 @@ import {
     hostnameOf,
     normalizeAddress,
     pageEntry,
+    portfolioHosts,
 } from './browser';
 
 describe('normalizeAddress', () => {
@@ -123,9 +128,18 @@ describe('browserReducer', () => {
         expect(currentEntry(activeTab(state))).toEqual(c);
     });
 
-    it('reloads by bumping the reload key', () => {
+    it('reloads by bumping the frame key', () => {
         const state = run([{ type: 'navigate', entry: a }, { type: 'loaded', id: 1 }, { type: 'reload' }]);
-        expect(activeTab(state)).toMatchObject({ reloadKey: 1, loading: true });
+        expect(activeTab(state)).toMatchObject({ frame: { key: 2, url: a.url }, loading: true });
+    });
+
+    it('gives the frame a new key and url on navigate, back and forward', () => {
+        let state = run([{ type: 'navigate', entry: a }]);
+        expect(activeTab(state).frame).toEqual({ key: 1, url: a.url, settled: false });
+        state = run([{ type: 'navigate', entry: b }, { type: 'back' }], state);
+        expect(activeTab(state).frame).toEqual({ key: 3, url: a.url, settled: false });
+        state = browserReducer(state, { type: 'forward' });
+        expect(activeTab(state).frame).toEqual({ key: 4, url: b.url, settled: false });
     });
 
     it('opens new tabs, focused, on Favorites or a given page', () => {
@@ -169,10 +183,10 @@ describe('addressOrSearch', () => {
         expect(addressOrSearch('example.com')).toBe('https://example.com/');
     });
 
-    it('turns plain words into a DuckDuckGo search', () => {
-        expect(addressOrSearch('react hooks')).toBe('https://html.duckduckgo.com/html/?q=react%20hooks');
-        expect(addressOrSearch('react')).toBe('https://html.duckduckgo.com/html/?q=react');
-        expect(addressOrSearch('c++ & rust?')).toBe('https://html.duckduckgo.com/html/?q=c%2B%2B%20%26%20rust%3F');
+    it('turns plain words into a Bing search', () => {
+        expect(addressOrSearch('react hooks')).toBe('https://www.bing.com/search?q=react%20hooks');
+        expect(addressOrSearch('react')).toBe('https://www.bing.com/search?q=react');
+        expect(addressOrSearch('c++ & rust?')).toBe('https://www.bing.com/search?q=c%2B%2B%20%26%20rust%3F');
     });
 
     it('rejects empty input and other schemes', () => {
@@ -198,6 +212,14 @@ describe('youtubeEmbed', () => {
     });
 });
 
+describe('portfolioHosts', () => {
+    it('lists the production domain and the host the portfolio is running on', () => {
+        expect(portfolioHosts('http://localhost:5173/')).toEqual(['devbarman.xyz', 'localhost']);
+        expect(portfolioHosts('https://www.devbarman.xyz/')).toEqual(['devbarman.xyz']);
+        expect(portfolioHosts('https://portfolio-git-x.vercel.app/')).toEqual(['devbarman.xyz', 'portfolio-git-x.vercel.app']);
+    });
+});
+
 describe('frameSrc', () => {
     const proxy = 'https://p.workers.dev/';
 
@@ -219,24 +241,109 @@ describe('frameSrc', () => {
     });
 });
 
-describe('framed and reload', () => {
-    it('records the address the frame navigated to without changing the iframe url', () => {
-        let state = browserReducer(createBrowserState(), { type: 'navigate', entry: pageEntry('https://a.com/') });
+describe('rerouteSearch and blocked hosts', () => {
+    it('sends Google searches and the Google home page to Bing', () => {
+        expect(rerouteSearch('https://www.google.com/search?q=react+hooks&hl=en')).toBe('https://www.bing.com/search?q=react%20hooks');
+        expect(rerouteSearch('https://google.co.uk/search?q=x')).toBe('https://www.bing.com/search?q=x');
+        expect(rerouteSearch('https://www.google.com/')).toBe('https://www.bing.com/');
+        expect(rerouteSearch('https://www.google.com/webhp?hl=en')).toBe('https://www.bing.com/');
+    });
+
+    it('sends DuckDuckGo searches to Bing', () => {
+        expect(rerouteSearch('https://duckduckgo.com/?q=x&t=h_')).toBe('https://www.bing.com/search?q=x');
+        expect(rerouteSearch('https://html.duckduckgo.com/html/?q=x')).toBe('https://www.bing.com/search?q=x');
+        expect(rerouteSearch('https://lite.duckduckgo.com/lite/?q=x')).toBe('https://www.bing.com/search?q=x');
+    });
+
+    it('leaves everything else alone', () => {
+        for (const url of ['https://maps.google.com/', 'https://www.google.com/maps', 'https://www.youtube.com/', 'https://example.com/search?q=x', 'nope']) {
+            expect(rerouteSearch(url)).toBeNull();
+        }
+    });
+
+    it('knows the engines that block the proxy', () => {
+        for (const url of ['https://maps.google.com/', 'https://www.google.de/maps', 'https://duckduckgo.com/about', 'https://search.brave.com/search?q=x', 'https://www.startpage.com/']) {
+            expect(isBlockedHost(url)).toBe(true);
+        }
+        for (const url of ['https://www.youtube.com/', 'https://www.bing.com/', 'https://notgoogle.com/', 'nope']) {
+            expect(isBlockedHost(url)).toBe(false);
+        }
+    });
+
+    it('describes a blocked address', () => {
+        expect(blockedEntry('https://maps.google.com/x')).toEqual({ url: null, blocked: 'https://maps.google.com/x', title: 'maps.google.com' });
+    });
+
+    it('resolves an address to a page, a rerouted search or a blocked entry', () => {
+        expect(resolveEntry('https://a.dev/', 'A')).toEqual(pageEntry('https://a.dev/', 'A'));
+        expect(resolveEntry('https://www.google.com/search?q=x')).toEqual(pageEntry('https://www.bing.com/search?q=x'));
+        expect(resolveEntry('https://maps.google.com/')).toEqual(blockedEntry('https://maps.google.com/'));
+    });
+});
+
+describe('framed', () => {
+    const start = () => browserReducer(createBrowserState(), { type: 'navigate', entry: pageEntry('https://a.com/') });
+
+    it('only updates the title when the frame reports the page it was asked to load', () => {
+        const state = browserReducer(start(), { type: 'framed', id: 1, url: 'https://a.com/', title: 'A' });
+        const tab = activeTab(state);
+        expect(tab.history).toEqual([FAVORITES_ENTRY, { url: 'https://a.com/', title: 'A' }]);
+        expect(tab.frame).toEqual({ key: 1, url: 'https://a.com/', settled: true });
+    });
+
+    it('replaces the entry when the first report is a redirect, so Back is never stuck', () => {
+        const state = browserReducer(start(), { type: 'framed', id: 1, url: 'https://www.a.com/home', title: 'Home' });
+        const tab = activeTab(state);
+        expect(tab.history).toEqual([FAVORITES_ENTRY, { url: 'https://www.a.com/home', title: 'Home' }]);
+        expect(tab.index).toBe(1);
+        expect(tab.frame).toMatchObject({ key: 1, settled: true });
+    });
+
+    it('pushes a history entry for a link clicked inside the frame without reloading it', () => {
+        let state = browserReducer(start(), { type: 'framed', id: 1, url: 'https://a.com/', title: 'A' });
         state = browserReducer(state, { type: 'framed', id: 1, url: 'https://a.com/next', title: 'Next' });
-        const entry = currentEntry(activeTab(state));
-        expect(entry).toMatchObject({ url: 'https://a.com/', location: 'https://a.com/next', title: 'Next' });
+        const tab = activeTab(state);
+        expect(tab.history).toEqual([FAVORITES_ENTRY, { url: 'https://a.com/', title: 'A' }, { url: 'https://a.com/next', title: 'Next' }]);
+        expect(tab.index).toBe(2);
+        expect(tab.frame).toEqual({ key: 1, url: 'https://a.com/', settled: true });
+    });
+
+    it('drops forward history on an in-frame click and Back reloads the previous page', () => {
+        let state = browserReducer(start(), { type: 'framed', id: 1, url: 'https://a.com/', title: 'A' });
+        state = browserReducer(state, { type: 'navigate', entry: pageEntry('https://b.com/') });
+        state = browserReducer(state, { type: 'back' });
+        state = browserReducer(state, { type: 'framed', id: 1, url: 'https://a.com/', title: 'A' });
+        state = browserReducer(state, { type: 'framed', id: 1, url: 'https://a.com/next', title: 'Next' });
+        expect(activeTab(state).history.map((entry) => entry.url)).toEqual([null, 'https://a.com/', 'https://a.com/next']);
+        state = browserReducer(state, { type: 'back' });
+        expect(currentEntry(activeTab(state)).url).toBe('https://a.com/');
+        expect(activeTab(state).frame).toEqual({ key: 4, url: 'https://a.com/', settled: false });
+    });
+
+    it('swaps the frame to the embed player when the page reaches a YouTube watch URL', () => {
+        let state = browserReducer(createBrowserState(), { type: 'navigate', entry: pageEntry('https://www.youtube.com/') });
+        state = browserReducer(state, { type: 'framed', id: 1, url: 'https://www.youtube.com/', title: 'YouTube' });
+        state = browserReducer(state, { type: 'framed', id: 1, url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', title: 'Song' });
+        const tab = activeTab(state);
+        // The embed player never reports a title, so the entry is named after the host.
+        expect(currentEntry(tab)).toEqual({ url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', title: 'youtube.com' });
+        expect(tab.frame).toEqual({ key: 2, url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', settled: false });
+        expect(tab.loading).toBe(true);
+    });
+
+    it('reroutes a blocked address reached inside the frame', () => {
+        let state = browserReducer(start(), { type: 'framed', id: 1, url: 'https://a.com/', title: 'A' });
+        state = browserReducer(state, { type: 'framed', id: 1, url: 'https://www.google.com/search?q=x', title: 'x' });
+        expect(currentEntry(activeTab(state))).toEqual(pageEntry('https://www.bing.com/search?q=x'));
+        expect(activeTab(state).frame).toMatchObject({ key: 2, url: 'https://www.bing.com/search?q=x' });
+        state = browserReducer(state, { type: 'framed', id: 1, url: 'https://www.bing.com/search?q=x', title: 'x' });
+        state = browserReducer(state, { type: 'framed', id: 1, url: 'https://maps.google.com/', title: 'Maps' });
+        expect(currentEntry(activeTab(state))).toEqual(blockedEntry('https://maps.google.com/'));
     });
 
     it('ignores framed reports for the Favorites page and unknown tabs', () => {
         const state = createBrowserState();
-        expect(currentEntry(activeTab(browserReducer(state, { type: 'framed', id: 1, url: 'https://a.com/' }))).location).toBeUndefined();
+        expect(browserReducer(state, { type: 'framed', id: 1, url: 'https://a.com/' })).toBe(state);
         expect(browserReducer(state, { type: 'framed', id: 9, url: 'https://a.com/' })).toBe(state);
-    });
-
-    it('reloads the page the visitor navigated to', () => {
-        let state = browserReducer(createBrowserState(), { type: 'navigate', entry: pageEntry('https://a.com/') });
-        state = browserReducer(state, { type: 'framed', id: 1, url: 'https://a.com/next', title: 'Next' });
-        state = browserReducer(state, { type: 'reload' });
-        expect(currentEntry(activeTab(state))).toMatchObject({ url: 'https://a.com/next', location: undefined });
     });
 });

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-    isBlockedHost, isRefusedType, kindOf, proxyCss, proxySrcset, requestHeadersFor,
-    responseHeadersFor, targetFromRequest, toProxied,
+    bingClickTarget, isBlockedHost, isRefusedType, kindOf, proxyCss, proxySrcset, requestHeadersFor,
+    responseHeadersFor, targetFromReferer, targetFromRequest, toProxied,
 } from './proxyUrl';
 
 const W = 'https://p.workers.dev';
@@ -80,8 +80,41 @@ describe('headers', () => {
         expect(out.get('x-frame-options')).toBeNull();
         expect(out.get('set-cookie')).toBeNull();
         expect(out.get('content-length')).toBeNull();
-        expect(out.get('content-security-policy')).toBe('frame-ancestors https://me.dev');
+        expect(out.get('content-security-policy')).toBe(`frame-ancestors https://me.dev ${W}`);
+        expect(out.get('referrer-policy')).toBe('same-origin');
         expect(out.get('location')).toBe(`${W}/https://a.com/next`);
+    });
+});
+
+describe('targetFromReferer', () => {
+    it('resolves a path a script built against the proxied page that requested it', () => {
+        expect(targetFromReferer(`${W}/results?q=x`, `${W}/https://www.youtube.com/feed/a?b=1`, W)).toBe('https://www.youtube.com/results?q=x');
+        expect(targetFromReferer(`${W}/static/app.js`, `${W}/https://a.com/dir/page`, W)).toBe('https://a.com/static/app.js');
+    });
+
+    it('needs a proxied page on the proxy as the referer', () => {
+        expect(targetFromReferer(`${W}/results`, null, W)).toBeNull();
+        expect(targetFromReferer(`${W}/results`, 'https://me.dev/', W)).toBeNull();
+        expect(targetFromReferer(`${W}/results`, `${W}/`, W)).toBeNull();
+        expect(targetFromReferer(`${W}/results`, `${W}/https://localhost/x`, W)).toBeNull();
+        expect(targetFromReferer(`${W}/`, `${W}/https://a.com/x`, W)).toBe('https://a.com/');
+    });
+});
+
+describe('bingClickTarget', () => {
+    it('decodes the destination of a Bing result link', () => {
+        // u = "a1" + base64url("https://react.dev/")
+        const url = new URL('https://www.bing.com/ck/a?!&&p=abc&ptn=3&u=a1aHR0cHM6Ly9yZWFjdC5kZXYv&ntb=1');
+
+        expect(bingClickTarget(url)).toBe('https://react.dev/');
+    });
+
+    it('ignores other links and malformed or non-web destinations', () => {
+        expect(bingClickTarget(new URL('https://www.bing.com/search?q=x'))).toBeNull();
+        expect(bingClickTarget(new URL('https://example.com/ck/a?u=a1aHR0cHM6Ly9yZWFjdC5kZXYv'))).toBeNull();
+        expect(bingClickTarget(new URL('https://www.bing.com/ck/a?u=a1amF2YXNjcmlwdDphbGVydCgxKQ'))).toBeNull(); // javascript:alert(1)
+        expect(bingClickTarget(new URL('https://www.bing.com/ck/a?u=zz'))).toBeNull();
+        expect(bingClickTarget(new URL('https://www.bing.com/ck/a'))).toBeNull();
     });
 });
 

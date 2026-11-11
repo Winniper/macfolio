@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
 
@@ -23,25 +23,51 @@ const HELLO_PATH = [
 // stroke) so centring the <svg> centres the drawing itself. Edit both together.
 const HELLO_VIEWBOX = '33 29.8 499 165.2';
 
-// Black screen that draws "hello", holds, and fades into the lock screen.
-// Any click or key skips straight to the lock screen.
+// Apple Intelligence palette: blue → violet → pink → orange, painted along the
+// stroke. The gradient spans twice the drawing so sliding it makes the colours
+// flow through the word.
+const AURA_STOPS = [
+    ['0%', '#0a84ff'], ['22%', '#bf5af2'], ['45%', '#ff375f'], ['68%', '#ff9f0a'],
+    ['84%', '#ff375f'], ['100%', '#0a84ff'],
+];
+const GRADIENT_FROM = { x1: -470, x2: 532 };
+const GRADIENT_TO = { x1: 33, x2: 1035 };
+
+// Black screen that draws "hello" in a glowing Apple Intelligence gradient,
+// holds, and fades into the lock screen. Any click or key skips straight to
+// the lock screen.
 const BootScreen = () => {
     const rootRef = useRef(null);
     const pathRef = useRef(null);
+    const auraRef = useRef(null);
+    const gradientRef = useRef(null);
     const finishBoot = useSystemStore((state) => state.finishBoot);
 
-    useEffect(() => {
+    // A layout effect so the strokes are reset before the first paint: the
+    // SVG renders fully drawn until GSAP takes it to 0% (it stays invisible
+    // via CSS until then).
+    useLayoutEffect(() => {
         const timeline = gsap.timeline({ onComplete: finishBoot });
+        const strokes = [pathRef.current, auraRef.current];
+        const svg = pathRef.current.ownerSVGElement;
 
         if (prefersReducedMotion()) {
             timeline
-                .set(pathRef.current, { drawSVG: '100%' })
+                .set(strokes, { drawSVG: '100%' })
+                .set(svg, { visibility: 'visible' })
                 .to(rootRef.current, { opacity: 0, duration: 0.4, delay: 0.8 });
         } else {
             timeline
-                .fromTo(pathRef.current, { drawSVG: '0%' }, { drawSVG: '100%', duration: 2.5, ease: 'power1.inOut' })
+                .set(strokes, { drawSVG: '0%' })
+                .set(svg, { visibility: 'visible' })
+                .to(strokes, { drawSVG: '100%', duration: 2.5, ease: 'power1.inOut' })
                 .to(rootRef.current, { opacity: 0, duration: 0.5, delay: 0.5 });
         }
+
+        // The colours drift and the aura breathes for as long as the screen shows.
+        const ambience = gsap.timeline({ repeat: -1, yoyo: true, paused: prefersReducedMotion() })
+            .fromTo(gradientRef.current, { attr: GRADIENT_FROM }, { attr: GRADIENT_TO, duration: 4, ease: 'sine.inOut' })
+            .fromTo(auraRef.current, { opacity: 0.55 }, { opacity: 0.95, duration: 2, ease: 'sine.inOut' }, 0);
 
         const skip = () => {
             timeline.kill();
@@ -53,17 +79,38 @@ const BootScreen = () => {
         return () => {
             window.removeEventListener('keydown', skip);
             timeline.kill();
+            ambience.kill();
         };
     }, [finishBoot]);
 
     return (
         <div ref={rootRef} className="boot-screen" onPointerDown={finishBoot}>
             <svg viewBox={HELLO_VIEWBOX} aria-label="hello" role="img">
+                <defs>
+                    <linearGradient ref={gradientRef} id="hello-aura" gradientUnits="userSpaceOnUse" x1={GRADIENT_FROM.x1} y1="0" x2={GRADIENT_FROM.x2} y2="0">
+                        {AURA_STOPS.map(([offset, color]) => <stop key={offset} offset={offset} stopColor={color} />)}
+                    </linearGradient>
+                    <filter id="hello-glow" x="-30%" y="-60%" width="160%" height="220%">
+                        <feGaussianBlur stdDeviation="16" />
+                    </filter>
+                </defs>
+                {/* The aura: the same stroke, wider, blurred and pulsing behind the word. */}
+                <path
+                    ref={auraRef}
+                    d={HELLO_PATH}
+                    fill="none"
+                    stroke="url(#hello-aura)"
+                    strokeWidth="30"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    filter="url(#hello-glow)"
+                    opacity="0.75"
+                />
                 <path
                     ref={pathRef}
                     d={HELLO_PATH}
                     fill="none"
-                    stroke="white"
+                    stroke="url(#hello-aura)"
                     strokeWidth="14"
                     strokeLinecap="round"
                     strokeLinejoin="round"

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Plus, RotateCw, X } from 'lucide-react';
 
+import BlockedPage from '../components/browser/BlockedPage';
 import CantOpenPage from '../components/browser/CantOpenPage';
 import FavoritesPage from '../components/browser/FavoritesPage';
 import WindowControls from '../components/WindowControl';
@@ -17,7 +18,8 @@ import {
     frameSrc,
     hostnameOf,
     normalizeAddress,
-    pageEntry,
+    portfolioHosts,
+    resolveEntry,
 } from '../lib/browser';
 import useWindowStore from '../store/window';
 
@@ -39,9 +41,9 @@ const Browser = () => {
     const frames = useRef(new Map());
     const { projects } = useProjects();
 
-    // The portfolio's own projects are known to allow framing: skip the proxy for them.
+    // The portfolio itself and its projects are known to allow framing: skip the proxy for them.
     const directHosts = useMemo(
-        () => favoritesFromProjects(projects).map((favorite) => hostnameOf(favorite.url)),
+        () => [...portfolioHosts(window.location.href), ...favoritesFromProjects(projects).map((favorite) => hostnameOf(favorite.url))],
         [projects],
     );
 
@@ -49,17 +51,24 @@ const Browser = () => {
     const entry = currentEntry(tab);
 
     // A proxied page reports the real address and title it is showing, so the
-    // address bar and tab follow links clicked inside the frame.
+    // address bar and history follow links clicked inside the frame; popups
+    // and target="_blank" links ask for a new tab.
     useEffect(() => {
         if (!PROXY_ORIGIN) return undefined;
 
         const onMessage = (event) => {
-            if (event.origin !== PROXY_ORIGIN || event.data?.type !== 'safari:page') return;
+            if (event.origin !== PROXY_ORIGIN) return;
 
             const id = [...frames.current].find(([, frame]) => frame?.contentWindow === event.source)?.[0];
-            const url = normalizeAddress(event.data.url);
+            const url = normalizeAddress(event.data?.url);
 
-            if (id && url) dispatch({ type: 'framed', id, url, title: String(event.data.title ?? '').slice(0, 120) });
+            if (!id || !url) return;
+
+            if (event.data.type === 'safari:page') {
+                dispatch({ type: 'framed', id, url, title: String(event.data.title ?? '').slice(0, 120) });
+            } else if (event.data.type === 'safari:open') {
+                dispatch({ type: 'newTab', entry: resolveEntry(url) });
+            }
         };
 
         window.addEventListener('message', onMessage);
@@ -82,7 +91,7 @@ const Browser = () => {
 
         dispatch({
             type: 'newTab',
-            entry: url ? pageEntry(url, request.title) : errorEntry(String(request.url)),
+            entry: url ? resolveEntry(url, request.title) : errorEntry(String(request.url)),
         });
     }, [request]);
 
@@ -101,7 +110,7 @@ const Browser = () => {
         if (text.trim() !== '') {
             const url = addressOrSearch(text);
 
-            open(url ? pageEntry(url, url === normalizeAddress(text) ? undefined : text.trim()) : errorEntry(text));
+            open(url ? resolveEntry(url, url === normalizeAddress(text) ? undefined : text.trim()) : errorEntry(text));
         }
         input?.blur();
     };
@@ -135,9 +144,9 @@ const Browser = () => {
                         aria-label="Address"
                         placeholder="Search or enter website name"
                         spellCheck={false}
-                        value={draft ?? entry.location ?? entry.url ?? ''}
+                        value={draft ?? entry.url ?? ''}
                         onFocus={(event) => {
-                            setDraft(entry.location ?? entry.url ?? '');
+                            setDraft(entry.url ?? '');
                             event.target.select();
                         }}
                         onChange={(event) => setDraft(event.target.value)}
@@ -198,13 +207,13 @@ const Browser = () => {
 
                     return (
                         <iframe
-                            key={`${item.id}:${item.index}:${item.reloadKey}`}
+                            key={`${item.id}:${item.frame.key}`}
                             title={itemEntry.title}
                             ref={(node) => {
                                 if (node) frames.current.set(item.id, node);
                                 else frames.current.delete(item.id);
                             }}
-                            src={frameSrc(itemEntry.url, PROXY_URL, directHosts)}
+                            src={frameSrc(item.frame.url, PROXY_URL, directHosts)}
                             sandbox={IFRAME_SANDBOX}
                             allow="fullscreen"
                             referrerPolicy="strict-origin-when-cross-origin"
@@ -215,10 +224,20 @@ const Browser = () => {
                     );
                 })}
 
-                {!entry.url && entry.error === undefined && (
-                    <FavoritesPage onOpen={(favorite) => open(pageEntry(favorite.url, favorite.title))} />
+                {!entry.url && entry.error === undefined && entry.blocked === undefined && (
+                    <FavoritesPage onOpen={(favorite) => open(resolveEntry(favorite.url, favorite.title))} />
                 )}
                 {!entry.url && entry.error !== undefined && <CantOpenPage input={entry.error} />}
+                {!entry.url && entry.blocked !== undefined && (
+                    <BlockedPage
+                        url={entry.blocked}
+                        onSearch={(text) => {
+                            const url = addressOrSearch(text);
+
+                            open(url ? resolveEntry(url, text) : errorEntry(text));
+                        }}
+                    />
+                )}
             </div>
         </div>
     );

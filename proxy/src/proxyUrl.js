@@ -73,6 +73,30 @@ export const targetFromRequest = (requestUrl, selfHosts = []) => {
     return target;
 };
 
+// A request for a bare path ("/results?q=x", built by a script from
+// location.pathname) resolved against the real URL of the proxied page that
+// sent it (the Referer), or null when the referer isn't such a page.
+export const targetFromReferer = (requestUrl, referer, workerOrigin, selfHosts = []) => {
+    if (!referer) return null;
+
+    try {
+        const from = new URL(referer);
+
+        if (from.origin !== workerOrigin) return null;
+
+        const base = targetFromRequest(from.href, selfHosts);
+
+        if (!base) return null;
+
+        const request = new URL(requestUrl);
+        const target = new URL(request.pathname + request.search, base);
+
+        return isBlockedHost(target.hostname, selfHosts) ? null : target.href;
+    } catch {
+        return null;
+    }
+};
+
 const SKIPPED = /^(data:|blob:|javascript:|mailto:|tel:|about:|#)/i;
 
 // Resolves href against the page URL and points it at the proxy. Leaves
@@ -153,12 +177,35 @@ export const responseHeadersFor = (headers, { parents, rewritten, workerOrigin, 
 
     if (location) out.set('location', toProxied(location, base, workerOrigin));
 
-    out.set('content-security-policy', `frame-ancestors ${parents.join(' ') || "'none'"}`);
+    // The portfolio, plus the proxy itself so proxied pages can embed proxied frames.
+    out.set('content-security-policy', `frame-ancestors ${[...parents, workerOrigin].filter(Boolean).join(' ')}`);
     out.set('x-robots-tag', 'noindex, nofollow');
-    out.set('referrer-policy', 'no-referrer');
+    // Proxy-to-proxy requests carry the proxied page as Referer (never forwarded
+    // upstream), so a bare path a script built can be resolved against it.
+    out.set('referrer-policy', 'same-origin');
     out.set('access-control-allow-origin', '*');
 
     return out;
+};
+
+// Bing result links go to /ck/a, a page whose script sets location.href to the
+// real destination (carried base64url-encoded in `u`, after "a1"). Script
+// navigation can't be kept on the proxy, so the Worker resolves it itself.
+export const bingClickTarget = (target) => {
+    if (!/(^|\.)bing\.com$/.test(target.hostname) || target.pathname !== '/ck/a') return null;
+
+    const encoded = target.searchParams.get('u') ?? '';
+
+    if (!encoded.startsWith('a1')) return null;
+
+    try {
+        const bytes = atob(encoded.slice(2).replace(/-/g, '+').replace(/_/g, '/'));
+        const url = new URL(new TextDecoder().decode(Uint8Array.from(bytes, (char) => char.charCodeAt(0))));
+
+        return ['http:', 'https:'].includes(url.protocol) ? url.href : null;
+    } catch {
+        return null;
+    }
 };
 
 export const isRefusedType = (contentType = '', contentLength = null) => {

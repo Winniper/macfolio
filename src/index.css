@@ -433,6 +433,10 @@ body.mission-control-open [data-window] > * {
   /* Same on-screen size as before the viewBox was tightened (560px at 640 units). */
   width: min(437px, 55vw);
   height: auto;
+  /* The blurred aura spills past the drawing's tight viewBox. */
+  overflow: visible;
+  /* Hidden until BootScreen has reset the strokes, so the full word never flashes. */
+  visibility: hidden;
 }
 .lock-screen {
   position: fixed;
@@ -692,11 +696,31 @@ body.mission-control-open [data-window] > * {
   font-size: 11px;
   color: #8a8a8a;
 }
-.browser-cant-open {
+.browser-cant-open,
+.browser-blocked {
   text-align: center;
   padding-top: 15%;
   color: #9a9a9a;
   font-size: 14px;
+}
+.browser-blocked-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 420px;
+  margin: 24px auto 0;
+  padding: 7px 12px;
+  border-radius: 8px;
+  background: #1e1e1e;
+  border: 1px solid #3a3a3a;
+}
+.browser-blocked-search input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  color: #f0f0f0;
+  font-size: 13px;
+  outline: none;
 }
 
 /* Menu bar: above windows (z 1000+), below the hot corner (100001). */

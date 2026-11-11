@@ -3,8 +3,8 @@
 // pages so they can only be framed by the portfolio (ALLOWED_PARENTS).
 
 import {
-    isRefusedType, kindOf, parentsList, proxyCss, proxySrcset, requestHeadersFor,
-    responseHeadersFor, targetFromRequest, toProxied,
+    bingClickTarget, isRefusedType, kindOf, parentsList, proxyCss, proxySrcset, requestHeadersFor,
+    responseHeadersFor, targetFromReferer, targetFromRequest, toProxied,
 } from './proxyUrl';
 import { SHIM_SOURCE } from './shim';
 
@@ -98,15 +98,26 @@ export default {
 
         const selfHosts = [url.hostname, ...parents.map((parent) => { try { return new URL(parent).hostname; } catch { return ''; } })];
         const target = targetFromRequest(request.url, selfHosts);
-
-        if (!target) return text(notFramedPage, url.pathname === '/' ? 200 : 400, 'text/html; charset=utf-8');
-
         const dest = request.headers.get('sec-fetch-dest');
+
+        if (!target) {
+            // A bare path from a proxied page's script: send it to the proxied address.
+            const fromReferer = dest !== 'document' && targetFromReferer(request.url, request.headers.get('referer'), url.origin, selfHosts);
+
+            if (fromReferer) return Response.redirect(`${url.origin}/${fromReferer}`, 307);
+
+            return text(notFramedPage, url.pathname === '/' ? 200 : 400, 'text/html; charset=utf-8');
+        }
 
         // Opening the proxy address directly (not from a frame) shows a notice instead.
         if (dest === 'document') return text(notFramedPage, 403, 'text/html; charset=utf-8');
 
         if (rateLimited(request.headers.get('cf-connecting-ip') ?? 'unknown')) return text('Too many requests', 429);
+
+        // Bing result clicks: jump straight to the destination, on the proxy.
+        const clickTarget = bingClickTarget(target);
+
+        if (clickTarget) return Response.redirect(`${url.origin}/${clickTarget}`, 302);
 
         let body;
 
