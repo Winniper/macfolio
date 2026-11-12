@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Plus, RotateCw, X } from 'lucide-react';
 
 import BlockedPage from '../components/browser/BlockedPage';
@@ -6,112 +6,25 @@ import CantOpenPage from '../components/browser/CantOpenPage';
 import FavoritesPage from '../components/browser/FavoritesPage';
 import WindowControls from '../components/WindowControl';
 import WindowWrapper from '../hoc/WindowWrapper';
-import useProjects from '../hooks/useProjects';
-import {
-    activeTab,
-    addressOrSearch,
-    browserReducer,
-    createBrowserState,
-    currentEntry,
-    errorEntry,
-    favoritesFromProjects,
-    frameSrc,
-    hostnameOf,
-    normalizeAddress,
-    portfolioHosts,
-    resolveEntry,
-} from '../lib/browser';
-import useWindowStore from '../store/window';
-
-// Worker that lets sites which refuse framing (Google, GitHub…) show inside
-// Safari; see proxy/. Unset, every site is framed directly.
-const PROXY_URL = import.meta.env.VITE_SAFARI_PROXY_URL ?? '';
-const PROXY_ORIGIN = PROXY_URL ? new URL(PROXY_URL).origin : null;
-
-// Embedded sites may run scripts, submit forms and open popups, but never
-// navigate the portfolio itself (no allow-top-navigation).
-const IFRAME_SANDBOX = 'allow-scripts allow-same-origin allow-forms allow-modals allow-downloads allow-popups allow-popups-to-escape-sandbox';
+import useBrowserTabs from '../hooks/useBrowserTabs';
+import { addressOrSearch, currentEntry, errorEntry, resolveEntry } from '../lib/browser';
 
 const Browser = () => {
-    const [browser, dispatch] = useReducer(browserReducer, undefined, createBrowserState);
+    const { browser, tab, entry, dispatch, open: openEntry, go, frames } = useBrowserTabs();
     const [draft, setDraft] = useState(null);
-    const isOpen = useWindowStore((state) => state.windows.safari.isOpen);
-    const request = useWindowStore((state) => state.windows.safari.data);
-
-    const frames = useRef(new Map());
-    const { projects } = useProjects();
-
-    // The portfolio itself and its projects are known to allow framing: skip the proxy for them.
-    const directHosts = useMemo(
-        () => [...portfolioHosts(window.location.href), ...favoritesFromProjects(projects).map((favorite) => hostnameOf(favorite.url))],
-        [projects],
-    );
-
-    const tab = activeTab(browser);
-    const entry = currentEntry(tab);
-
-    // A proxied page reports the real address and title it is showing, so the
-    // address bar and history follow links clicked inside the frame; popups
-    // and target="_blank" links ask for a new tab.
-    useEffect(() => {
-        if (!PROXY_ORIGIN) return undefined;
-
-        const onMessage = (event) => {
-            if (event.origin !== PROXY_ORIGIN) return;
-
-            const id = [...frames.current].find(([, frame]) => frame?.contentWindow === event.source)?.[0];
-            const url = normalizeAddress(event.data?.url);
-
-            if (!id || !url) return;
-
-            if (event.data.type === 'safari:page') {
-                dispatch({ type: 'framed', id, url, title: String(event.data.title ?? '').slice(0, 120) });
-            } else if (event.data.type === 'safari:open') {
-                dispatch({ type: 'newTab', entry: resolveEntry(url) });
-            }
-        };
-
-        window.addEventListener('message', onMessage);
-
-        return () => window.removeEventListener('message', onMessage);
-    }, []);
-
-    // openWindow('safari', { url, title }) — e.g. from Finder — opens a new tab.
-    // Each call passes a new object, so the same project twice opens twice.
-    useEffect(() => {
-        // File → New Tab
-        if (request?.newTab) {
-            dispatch({ type: 'newTab' });
-            return;
-        }
-
-        if (!request?.url) return;
-
-        const url = normalizeAddress(request.url);
-
-        dispatch({
-            type: 'newTab',
-            entry: url ? resolveEntry(url, request.title) : errorEntry(String(request.url)),
-        });
-    }, [request]);
 
     const open = (entryToOpen) => {
-        dispatch({ type: 'navigate', entry: entryToOpen });
+        openEntry(entryToOpen);
         setDraft(null);
     };
 
     const submitAddress = (event) => {
         event.preventDefault();
 
-        const text = draft ?? '';
         const input = event.currentTarget.querySelector('input');
 
-        // An empty address bar is not an error: just leave it.
-        if (text.trim() !== '') {
-            const url = addressOrSearch(text);
-
-            open(url ? resolveEntry(url, url === normalizeAddress(text) ? undefined : text.trim()) : errorEntry(text));
-        }
+        go(draft ?? '');
+        setDraft(null);
         input?.blur();
     };
 
@@ -199,30 +112,9 @@ const Browser = () => {
             <div className="browser-content">
                 {tab.loading && <div className="browser-progress" />}
 
-                {browser.tabs.map((item) => {
-                    const itemEntry = currentEntry(item);
-
-                    // Closed Safari stops its sites; tabs and history stay in the reducer.
-                    if (!itemEntry.url || !isOpen) return null;
-
-                    return (
-                        <iframe
-                            key={`${item.id}:${item.frame.key}`}
-                            title={itemEntry.title}
-                            ref={(node) => {
-                                if (node) frames.current.set(item.id, node);
-                                else frames.current.delete(item.id);
-                            }}
-                            src={frameSrc(item.frame.url, PROXY_URL, directHosts)}
-                            sandbox={IFRAME_SANDBOX}
-                            allow="fullscreen"
-                            referrerPolicy="strict-origin-when-cross-origin"
-                            className="browser-frame"
-                            hidden={item.id !== browser.activeTabId}
-                            onLoad={() => dispatch({ type: 'loaded', id: item.id })}
-                        />
-                    );
-                })}
+                {frames.map((frame) => (
+                    <iframe key={frame.key} {...frame.props} className="browser-frame" hidden={frame.hidden} />
+                ))}
 
                 {!entry.url && entry.error === undefined && entry.blocked === undefined && (
                     <FavoritesPage onOpen={(favorite) => open(resolveEntry(favorite.url, favorite.title))} />
