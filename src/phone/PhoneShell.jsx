@@ -11,6 +11,7 @@ import AppScreen from './AppScreen';
 import { PHONE_APPS } from './apps';
 import HomeBar from './HomeBar';
 import HomeScreen from './HomeScreen';
+import PhoneSpotlight from './PhoneSpotlight';
 import RotateCard from './RotateCard';
 import StatusBar from './StatusBar';
 
@@ -91,7 +92,7 @@ const ComingSoon = ({ id }) => {
 
 // One open app. Hidden apps stay mounted (they keep their scroll position and
 // state) but are invisible, inert and out of the accessibility tree.
-const PhoneApp = ({ id, front }) => {
+const PhoneApp = ({ id, front, covered }) => {
     const sectionRef = useRef(null);
     const Screen = PHONE_APPS[id];
 
@@ -107,7 +108,7 @@ const PhoneApp = ({ id, front }) => {
             className="phone-app"
             data-app={id}
             data-front={front}
-            inert={!front}
+            inert={!front || covered}
             aria-hidden={!front}
         >
             {Screen ? <Screen /> : <ComingSoon id={id} />}
@@ -120,6 +121,7 @@ const PhoneApp = ({ id, front }) => {
 const PhoneShell = () => {
     const foreground = useWindowStore(foregroundApp);
     const open = useWindowStore(useShallow(recentApps));
+    const spotlightOpen = useSystemStore((state) => state.spotlightOpen);
     const goHome = useSystemStore((state) => state.goHome);
     const openMissionControl = useSystemStore((state) => state.openMissionControl);
     const rootRef = useRef(null);
@@ -161,8 +163,9 @@ const PhoneShell = () => {
 
     return (
         <div id="phone" ref={rootRef}>
-            <HomeScreen inert={foreground !== null} />
-            {open.map((id) => <PhoneApp key={id} id={id} front={id === foreground} />)}
+            <HomeScreen inert={foreground !== null || spotlightOpen} />
+            {open.map((id) => <PhoneApp key={id} id={id} front={id === foreground} covered={spotlightOpen} />)}
+            <PhoneSpotlight />
             <StatusBar />
             <HomeBar onHome={onHome} onSwitcher={openMissionControl} />
             <RotateCard />

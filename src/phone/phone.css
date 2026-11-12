@@ -1239,3 +1239,176 @@ body > .phone-rotate-card {
   font-size: 17px;
   font-weight: 600;
 }
+
+/* ---- Spotlight sheet ---- */
+
+/* Below the status bar and Home bar (z 50), which stay usable; above the apps. */
+#phone .phone-spotlight {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+}
+
+#phone .phone-spotlight-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0.45);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+#phone .phone-spotlight-sheet {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100% - 40px);
+  padding-top: var(--phone-status-height);
+  background: rgba(28, 28, 30, 0.96);
+  border-radius: 0 0 28px 28px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+#phone .phone-spotlight-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px 18px;
+  touch-action: none;
+}
+
+#phone .phone-spotlight-field {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: rgba(118, 118, 128, 0.32);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+#phone .phone-spotlight-field input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: #fff;
+  font: inherit;
+  font-size: 17px;
+  user-select: text;
+  -webkit-user-select: text;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+#phone .phone-spotlight-field input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+#phone .phone-spotlight-field input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
+#phone .phone-spotlight-cancel {
+  min-height: 44px;
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  color: var(--phone-blue);
+  font-size: 17px;
+}
+
+#phone .phone-spotlight-handle {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  width: 36px;
+  height: 5px;
+  margin-left: -18px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+#phone .phone-spotlight-results {
+  min-height: 0;
+  padding: 0 16px calc(var(--phone-home-bar-height) + env(safe-area-inset-bottom));
+}
+
+#phone .phone-spotlight-group {
+  margin: 8px 4px 4px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: none;
+}
+
+#phone .phone-spotlight-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  text-align: left;
+  touch-action: pan-y;
+}
+
+#phone .phone-spotlight-row:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+#phone .phone-spotlight-row img {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+#phone .phone-spotlight-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 17px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#phone .phone-spotlight-subtitle {
+  flex: none;
+  max-width: 40%;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#phone .phone-spotlight-empty {
+  margin: 24px 0;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #phone .phone-spotlight-backdrop {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
