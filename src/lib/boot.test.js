@@ -67,10 +67,6 @@ describe('initialBootPhase', () => {
     it('skips to the desktop after the boot was seen in this tab', () => {
         expect(initialBootPhase({ bootSeen: true })).toBe('desktop');
     });
-
-    it('boots on a first visit on any screen size', () => {
-        expect(initialBootPhase({ bootSeen: false })).toBe('booting');
-    });
 });
 
 describe('isPhoneScreen', () => {

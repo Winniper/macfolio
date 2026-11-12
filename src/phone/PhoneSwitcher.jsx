@@ -3,7 +3,7 @@ import gsap from 'gsap';
 import { X } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { phoneRegistry } from '../constants/apps';
+import { getApp, phoneRegistry } from '../constants/apps';
 import { prefersReducedMotion } from '../lib/boot';
 import { swipeDirection } from '../lib/gestures';
 import { recentApps } from '../lib/phone';
@@ -18,7 +18,10 @@ const SPRING_SECONDS = 0.35;
 // One open app: tap the card to open it, drag it up (or press its close
 // button) to close it. The card is a button and the close button its sibling.
 const SwitcherCard = ({ id, onClose }) => {
-    const app = phoneRegistry.find((entry) => entry.id === id);
+    // An app opened on the desktop before resizing has no phone placement.
+    const app = phoneRegistry.find((entry) => entry.id === id) ?? getApp(id);
+    const title = app?.title ?? id;
+    const icon = app?.icon ?? '/images/about.svg';
     const switchToApp = useSystemStore((state) => state.switchToApp);
     const cardRef = useRef(null);
 
@@ -49,14 +52,14 @@ const SwitcherCard = ({ id, onClose }) => {
         <li ref={cardRef} className="phone-switcher-card">
             <button type="button" className="phone-switcher-open" onClick={() => switchToApp(id)}>
                 <span className="phone-switcher-head">
-                    <img src={app.icon} alt="" draggable="false" />
-                    <span>{app.title}</span>
+                    <img src={icon} alt="" draggable="false" />
+                    <span>{title}</span>
                 </span>
                 <span className="phone-switcher-preview">
-                    <img src={app.icon} alt="" draggable="false" />
+                    <img src={icon} alt="" draggable="false" />
                 </span>
             </button>
-            <button type="button" className="phone-switcher-close" aria-label={`Close ${app.title}`} onClick={onClose}>
+            <button type="button" className="phone-switcher-close" aria-label={`Close ${title}`} onClick={onClose}>
                 <X size={14} aria-hidden="true" />
             </button>
         </li>

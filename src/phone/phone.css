@@ -35,6 +35,11 @@ html.phone-mode body {
   background: #000 url("/images/wallpaper.png") center / cover no-repeat;
 }
 
+#phone :is(input, textarea) {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 #phone button {
   font: inherit;
   color: inherit;
@@ -1314,8 +1319,6 @@ body > .phone-rotate-card {
   color: #fff;
   font: inherit;
   font-size: 17px;
-  user-select: text;
-  -webkit-user-select: text;
   -webkit-appearance: none;
   appearance: none;
 }

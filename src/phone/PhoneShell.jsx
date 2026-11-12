@@ -151,6 +151,10 @@ const PhoneShell = () => {
     // that runs does nothing.
     const onHome = () => {
         if (closing.current) return;
+        // A sheet left open would stay on top of the app while it shrinks.
+        const { closeSpotlight, closeControlCenter } = useSystemStore.getState();
+        closeSpotlight();
+        closeControlCenter();
         // From the switcher the front app is behind the layer: nothing to shrink.
         if (useSystemStore.getState().missionControl) {
             goHome();

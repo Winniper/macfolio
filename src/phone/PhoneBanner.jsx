@@ -85,6 +85,10 @@ const Banner = ({ notification }) => {
 
     const open = () => {
         dismissNotification(id);
+        // The banner sits above the sheets: close them so the app is not opened behind one.
+        const { closeSpotlight, closeControlCenter } = useSystemStore.getState();
+        closeSpotlight();
+        closeControlCenter();
         if (notification.action) runMenuAction(notification.action);
     };
 
