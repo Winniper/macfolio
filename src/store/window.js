@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { buildWindowConfig, getApp, INITIAL_Z_INDEX } from '../constants/apps';
-import { clampBounds, getViewport, maximizedBounds } from '../lib/bounds';
+import { clampBounds, fitOnScreen, getViewport, maximizedBounds } from '../lib/bounds';
 
 export const createInitialWindowState = () => ({
   windows: buildWindowConfig(),
@@ -27,6 +27,7 @@ const topmostVisibleWindow = (windows) => {
 };
 
 const fitBounds = (key, bounds) => clampBounds(bounds, getApp(key).minSize, getViewport());
+const fitOpen = (key, bounds) => fitOnScreen(bounds, getApp(key).minSize, getViewport());
 
 const raise = (state, key) => {
   state.windows[key].zIndex = state.nextZIndex;
@@ -54,7 +55,7 @@ const useWindowStore = create(
         window.originRect = originRect;
         window.bounds = window.isMaximized
           ? maximizedBounds(getViewport())
-          : fitBounds(key, window.bounds ?? getApp(key).defaultBounds);
+          : fitOpen(key, window.bounds ?? getApp(key).defaultBounds);
 
         unminimize(state, key);
         raise(state, key);
@@ -107,6 +108,11 @@ const useWindowStore = create(
         if (!window || !window.isMinimized) return;
 
         window.originRect = originRect;
+
+        if (!window.isMaximized) {
+          window.bounds = fitOpen(key, window.bounds ?? getApp(key).defaultBounds);
+        }
+
         unminimize(state, key);
         raise(state, key);
       }),
@@ -118,7 +124,7 @@ const useWindowStore = create(
         if (!window || !window.isOpen) return;
 
         if (window.isMaximized) {
-          window.bounds = fitBounds(key, window.prevBounds ?? getApp(key).defaultBounds);
+          window.bounds = fitOpen(key, window.prevBounds ?? getApp(key).defaultBounds);
           window.prevBounds = null;
           window.isMaximized = false;
         } else {
@@ -144,7 +150,7 @@ const useWindowStore = create(
 
           window.bounds = window.isMaximized
             ? maximizedBounds(getViewport())
-            : fitBounds(key, window.bounds);
+            : fitOpen(key, window.bounds);
         });
       }),
   }))

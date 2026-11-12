@@ -112,7 +112,29 @@ describe('bounds', () => {
     it('fits the default bounds to a small screen', () => {
         setViewport(800, 600);
         store().openWindow('resume');
-        expect(store().windows.resume.bounds).toEqual({ x: 700, y: 64, w: 700, h: 560 });
+        expect(store().windows.resume.bounds).toEqual({ x: 88, y: 52, w: 700, h: 416 });
+    });
+
+    it('opens a window fully on screen on a laptop-sized viewport', () => {
+        setViewport(1280, 800);
+        store().openWindow('resume');
+        expect(store().windows.resume.bounds).toEqual({ x: 568, y: 64, w: 700, h: 600 });
+    });
+
+    it('still lets a drag push a window mostly off screen', () => {
+        setViewport(1280, 800);
+        store().openWindow('contact');
+        store().setBounds('contact', { x: 1250, y: 300, w: 600, h: 350 });
+        expect(store().windows.contact.bounds.x).toBe(1200);
+    });
+
+    it('brings a dragged-off window back on screen when it is restored', () => {
+        setViewport(1280, 800);
+        store().openWindow('contact');
+        store().setBounds('contact', { x: 1250, y: 300, w: 600, h: 350 });
+        store().minimizeWindow('contact');
+        store().restoreWindow('contact');
+        expect(store().windows.contact.bounds).toEqual({ x: 668, y: 300, w: 600, h: 350 });
     });
 
     it('records where the window was launched from', () => {
@@ -151,7 +173,7 @@ describe('bounds', () => {
         store().setBounds('finder', { x: 1200, y: 700, w: 600, h: 400 });
         setViewport(1000, 700);
         store().fitToViewport();
-        expect(store().windows.finder.bounds).toEqual({ x: 920, y: 656, w: 600, h: 400 });
+        expect(store().windows.finder.bounds).toEqual({ x: 388, y: 168, w: 600, h: 400 });
     });
 });
 

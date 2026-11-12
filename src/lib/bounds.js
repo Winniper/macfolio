@@ -5,6 +5,7 @@ export const MENU_BAR_HEIGHT = 40;
 export const DOCK_RESERVE = 120; // dock is ~114px tall at the 3xl breakpoint
 export const TITLE_BAR_HEIGHT = 44;
 export const MIN_VISIBLE = 80;
+export const SCREEN_MARGIN = 12;
 
 export const getViewport = () => ({
     width: globalThis.innerWidth || 1440,
@@ -23,6 +24,26 @@ export const clampBounds = ({ x, y, w, h }, minSize, viewport) => {
     return {
         x: clamp(x, MIN_VISIBLE - width, viewport.width - MIN_VISIBLE),
         y: clamp(y, MENU_BAR_HEIGHT, viewport.height - TITLE_BAR_HEIGHT),
+        w: width,
+        h: height,
+    };
+};
+
+// Bounds that lie entirely inside the area between the menu bar and the dock,
+// SCREEN_MARGIN px from the edges. Used when a window opens, restores, un-zooms
+// or the screen changes; dragging keeps the looser clampBounds. If the area is
+// smaller than minSize the window takes the whole area.
+export const fitOnScreen = ({ x, y, w, h }, minSize, viewport) => {
+    const left = SCREEN_MARGIN;
+    const top = MENU_BAR_HEIGHT + SCREEN_MARGIN;
+    const areaW = Math.max(viewport.width - 2 * SCREEN_MARGIN, 0);
+    const areaH = Math.max(viewport.height - DOCK_RESERVE - SCREEN_MARGIN - top, 0);
+    const width = Math.min(Math.max(w, minSize.w), areaW);
+    const height = Math.min(Math.max(h, minSize.h), areaH);
+
+    return {
+        x: clamp(x, left, left + areaW - width),
+        y: clamp(y, top, top + areaH - height),
         w: width,
         h: height,
     };

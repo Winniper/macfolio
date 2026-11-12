@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import {
     MENU_BAR_HEIGHT, DOCK_RESERVE, TITLE_BAR_HEIGHT, MIN_VISIBLE,
-    getViewport, clampBounds, maximizedBounds, resizeBounds, toRect, transformToRect,
+    getViewport, clampBounds, fitOnScreen, maximizedBounds, resizeBounds, toRect, transformToRect,
 } from './bounds';
 
 const viewport = { width: 1440, height: 900 };
@@ -103,5 +103,31 @@ describe('transformToRect', () => {
     it('maps a window onto a target rect from its top-left corner', () => {
         expect(transformToRect({ x: 100, y: 100, w: 400, h: 300 }, { x: 600, y: 850, w: 48, h: 48 }))
             .toEqual({ x: 500, y: 750, scaleX: 0.12, scaleY: 0.16 });
+    });
+});
+
+describe('fitOnScreen', () => {
+    const laptop = { width: 1280, height: 800 };
+    const min = { w: 400, h: 360 };
+
+    it('moves a window that hangs off the right edge back on screen', () => {
+        expect(fitOnScreen({ x: 700, y: 64, w: 700, h: 600 }, min, laptop)).toEqual({ x: 568, y: 64, w: 700, h: 600 });
+    });
+    it('leaves a window alone when it is already fully on screen', () => {
+        expect(fitOnScreen({ x: 100, y: 100, w: 400, h: 400 }, min, laptop)).toEqual({ x: 100, y: 100, w: 400, h: 400 });
+    });
+    it('shrinks a window larger than the area between menu bar and dock', () => {
+        expect(fitOnScreen({ x: 200, y: 70, w: 1000, h: 680 }, { w: 480, h: 360 }, { width: 1024, height: 768 }))
+            .toEqual({ x: 12, y: 52, w: 1000, h: 584 });
+    });
+    it('takes the whole area when the screen is smaller than the minimum size', () => {
+        expect(fitOnScreen({ x: 240, y: 90, w: 900, h: 560 }, { w: 640, h: 400 }, { width: 700, height: 500 }))
+            .toEqual({ x: 12, y: 52, w: 676, h: 316 });
+    });
+    it('raises a too-small window to its minimum size', () => {
+        expect(fitOnScreen({ x: 100, y: 100, w: 200, h: 100 }, min, laptop)).toEqual({ x: 100, y: 100, w: 400, h: 360 });
+    });
+    it('pulls a window in from beyond the left and top edges', () => {
+        expect(fitOnScreen({ x: -300, y: 10, w: 400, h: 400 }, min, laptop)).toEqual({ x: 12, y: 52, w: 400, h: 400 });
     });
 });
