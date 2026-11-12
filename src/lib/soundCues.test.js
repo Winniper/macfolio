@@ -63,3 +63,13 @@ describe('soundCues', () => {
         expect(soundCues(before, before)).toEqual([]);
     });
 });
+
+describe('soundCues on the phone', () => {
+    it('never plays minimize or restore', () => {
+        const base = { bootPhase: 'desktop', spotlightOpen: false, notificationIds: [], minimized: [], visible: ['finder'] };
+        const home = { ...base, minimized: ['finder'], visible: [] };
+        expect(soundCues(base, home, { phone: true })).toEqual([]);
+        expect(soundCues(home, base, { phone: true })).toEqual([]);
+        expect(soundCues(base, { ...base, spotlightOpen: true }, { phone: true })).toEqual(['spotlight']);
+    });
+});

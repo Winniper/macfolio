@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 
+import { isPhoneScreen } from '../../lib/boot';
 import { soundCues, soundSnapshot } from '../../lib/soundCues';
 import { systemSounds } from '../../lib/sounds';
 import useSystemStore from '../../store/system';
@@ -16,7 +17,7 @@ const SoundEffects = () => {
 
         const check = () => {
             const next = snapshot();
-            const cues = soundCues(previous, next);
+            const cues = soundCues(previous, next, { phone: isPhoneScreen() });
 
             previous = next;
             if (!useSystemStore.getState().soundEffects) return;

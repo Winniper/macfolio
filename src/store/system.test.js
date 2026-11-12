@@ -456,3 +456,15 @@ describe('music library', () => {
         expect(system().audio).toMatchObject({ currentTrackId: null, isPlaying: false });
     });
 });
+
+describe('goHome', () => {
+    it('closes sheets', () => {
+        useSystemStore.setState({ bootPhase: 'desktop' });
+        system().openSpotlight(); system().goHome();
+        expect(system().spotlightOpen).toBe(false);
+        system().openControlCenter(); system().goHome();
+        expect(system().controlCenterOpen).toBe(false);
+        system().openMissionControl(); system().goHome();
+        expect(system().missionControl).toBeNull();
+    });
+});

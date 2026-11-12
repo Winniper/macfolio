@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { APPS, INITIAL_Z_INDEX, getApp, dockApps, desktopItems, buildWindowConfig } from './apps';
+import { APPS, INITIAL_Z_INDEX, getApp, dockApps, desktopItems, buildWindowConfig, phoneDockApps, phoneGridApps, phoneRegistry } from './apps';
 
 describe('app registry', () => {
     it('has unique ids', () => {
@@ -72,5 +72,19 @@ describe('app registry', () => {
             expect(app.keywords.length, app.id).toBeGreaterThan(0);
             app.keywords.forEach((keyword) => expect(keyword).toBe(keyword.toLowerCase()));
         });
+    });
+});
+
+describe('phone placement', () => {
+    it('derives the phone dock and grid in their own order with phone labels', () => {
+        expect(phoneDockApps.map((app) => app.id)).toEqual(['finder', 'safari', 'music', 'contact']);
+        expect(phoneGridApps.map((app) => [app.id, app.name])).toEqual([['resume', 'Resume'], ['terminal', 'Skills'], ['about', 'About']]);
+        expect(phoneDockApps[0]).toEqual({ id: 'finder', name: 'Projects', icon: '/images/finder.png' });
+    });
+
+    it('leaves launchers without a window off the phone', () => {
+        expect(phoneRegistry.map((app) => app.id)).not.toContain('trash');
+        expect(phoneRegistry.map((app) => app.id)).not.toContain('missionControl');
+        expect(phoneRegistry.find((app) => app.id === 'about').title).toBe('About');
     });
 });

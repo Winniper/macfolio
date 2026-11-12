@@ -143,6 +143,20 @@ const useWindowStore = create(
         window.bounds = fitBounds(key, bounds);
       }),
 
+    // Fresh default layout for every window (the desktop's saved bounds don't
+    // suit the phone); minimize state is left alone.
+    resetLayout: () =>
+      set((state) => {
+        Object.entries(state.windows).forEach(([key, window]) => {
+          const { defaultBounds, minSize } = getApp(key);
+
+          window.isMaximized = false;
+          window.prevBounds = null;
+          window.originRect = null;
+          window.bounds = window.isOpen ? fitOnScreen(defaultBounds, minSize, getViewport()) : null;
+        });
+      }),
+
     fitToViewport: () =>
       set((state) => {
         Object.entries(state.windows).forEach(([key, window]) => {

@@ -251,6 +251,22 @@ const useSystemStore = create(
       else focusWindow(key);
     },
 
+    // The phone's home gesture: close the sheets and put every app away
+    // (they stay open, so they remain in the app switcher).
+    goHome: () => {
+      set((state) => {
+        state.spotlightOpen = false;
+        state.controlCenterOpen = false;
+        state.missionControl = null;
+      });
+
+      const { windows, minimizeWindow } = useWindowStore.getState();
+
+      Object.entries(windows).forEach(([key, window]) => {
+        if (window.isOpen && !window.isMinimized) minimizeWindow(key);
+      });
+    },
+
     finishBoot: () =>
       set((state) => {
         if (state.bootPhase === 'booting') state.bootPhase = 'locked';

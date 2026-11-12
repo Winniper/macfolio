@@ -9,14 +9,14 @@ export const soundSnapshot = (windowState, systemState) => ({
         .filter((id) => windowState.windows[id].isOpen && !windowState.windows[id].isMinimized),
 });
 
-export const soundCues = (previous, next) => {
+export const soundCues = (previous, next, { phone = false } = {}) => {
     const cues = [];
 
     if (previous.bootPhase === 'locked' && next.bootPhase === 'desktop') cues.push('startup');
-    if (next.minimized.some((id) => !previous.minimized.includes(id))) cues.push('minimize');
+    if (!phone && next.minimized.some((id) => !previous.minimized.includes(id))) cues.push('minimize');
     // Leaving the dock counts as a restore only if the window is back on screen
     // (closing a minimized window also takes it off the dock).
-    if (previous.minimized.some((id) => !next.minimized.includes(id) && next.visible.includes(id))) cues.push('restore');
+    if (!phone && previous.minimized.some((id) => !next.minimized.includes(id) && next.visible.includes(id))) cues.push('restore');
     if (next.notificationIds.some((id) => !previous.notificationIds.includes(id))) cues.push('notification');
     if (!previous.spotlightOpen && next.spotlightOpen) cues.push('spotlight');
 

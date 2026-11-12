@@ -272,3 +272,16 @@ describe('maximize', () => {
         expect(store().windows.finder.bounds).toEqual(maximizedBounds({ width: 1000, height: 700 }));
     });
 });
+
+describe('resetLayout', () => {
+    it('gives open windows fresh on-screen bounds and clears zoom', () => {
+        setViewport(1280, 800);
+        store().openWindow('resume'); store().toggleMaximize('resume');
+        store().setBounds('resume', { x: 0, y: 40, w: 390, h: 700 });
+        store().openWindow('finder'); store().minimizeWindow('finder');
+        store().resetLayout();
+        expect(store().windows.resume).toMatchObject({ isMaximized: false, prevBounds: null, bounds: { x: 568, y: 64, w: 700, h: 600 } });
+        expect(store().windows.finder.isMinimized).toBe(true);
+        expect(store().windows.contact.bounds).toBeNull();
+    });
+});

@@ -3,6 +3,7 @@
 // without initializing the backend. Each windowed app's id must match the key
 // passed to WindowWrapper in its component file.
 // defaultBounds/minSize are px; the store clamps them to the screen.
+// `phone` ({ place: 'dock' | 'grid', order, label? }) puts an app on the phone home screen.
 // `action` marks dock launchers that run something instead of opening a window; `keywords` feed Spotlight.
 
 export const INITIAL_Z_INDEX = 1000;
@@ -10,6 +11,7 @@ export const INITIAL_Z_INDEX = 1000;
 export const APPS = [
     {
         id: 'finder',
+        phone: { place: 'dock', order: 1 },
         title: 'Projects',
         keywords: ['finder', 'work', 'portfolio', 'folders', 'files'],
         icon: '/images/finder.png',
@@ -21,6 +23,7 @@ export const APPS = [
     },
     {
         id: 'contact',
+        phone: { place: 'dock', order: 4 },
         title: 'Contact',
         keywords: ['email', 'message', 'hire', 'reach out', 'socials'],
         icon: '/images/contact.png',
@@ -30,6 +33,7 @@ export const APPS = [
     },
     {
         id: 'terminal',
+        phone: { place: 'grid', order: 2 },
         title: 'Skills',
         keywords: ['terminal', 'tech stack', 'technologies', 'tools'],
         icon: '/images/terminal.png',
@@ -39,6 +43,7 @@ export const APPS = [
     },
     {
         id: 'resume',
+        phone: { place: 'grid', order: 1 },
         title: 'Resume',
         label: 'Resume.pdf',
         keywords: ['cv', 'experience', 'pdf'],
@@ -50,6 +55,7 @@ export const APPS = [
     },
     {
         id: 'safari',
+        phone: { place: 'dock', order: 2 },
         title: 'Safari',
         keywords: ['browser', 'web', 'internet', 'sites', 'live demos'],
         icon: '/images/safari.png',
@@ -60,6 +66,7 @@ export const APPS = [
     },
     {
         id: 'music',
+        phone: { place: 'dock', order: 3 },
         title: 'Music',
         keywords: ['songs', 'audio', 'player', 'tunes', 'playlist'],
         icon: '/images/music.svg',
@@ -79,6 +86,7 @@ export const APPS = [
     },
     {
         id: 'about',
+        phone: { place: 'grid', order: 3, label: 'About' },
         title: 'About This Mac',
         keywords: ['system', 'profile', 'info', 'mac'],
         icon: '/images/about.svg',
@@ -118,6 +126,17 @@ export const desktopItems = APPS
         icon: app.desktopIcon ?? app.icon,
         position: app.desktopPosition,
     }));
+
+const phoneName = (app) => app.phone.label ?? app.title;
+const phoneApps = APPS.filter((app) => app.phone);
+const phoneList = (place) => phoneApps
+    .filter((app) => app.phone.place === place)
+    .sort((a, b) => a.phone.order - b.phone.order)
+    .map((app) => ({ id: app.id, name: phoneName(app), icon: app.icon }));
+
+export const phoneDockApps = phoneList('dock');
+export const phoneGridApps = phoneList('grid');
+export const phoneRegistry = phoneApps.map((app) => ({ ...app, title: phoneName(app) }));
 
 export const buildWindowConfig = (apps = APPS) =>
     Object.fromEntries(
