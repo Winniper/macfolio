@@ -49,6 +49,14 @@ describe('opening, focus and closing', () => {
         expect(store().focusedId).toBe('finder');
     });
 
+    it('forgets the icon rect of a window that comes forward by focus', () => {
+        const rect = { x: 10, y: 20, w: 60, h: 60 };
+        store().openWindow('finder', null, rect);
+        store().openWindow('terminal');
+        store().focusWindow('finder');
+        expect(store().windows.finder.originRect).toBeNull();
+    });
+
     it('does not bump z-index when the window is already focused', () => {
         store().openWindow('finder');
         const z = store().windows.finder.zIndex;

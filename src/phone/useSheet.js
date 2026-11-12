@@ -11,7 +11,7 @@ const FADE_SECONDS = 0.15;
 // store flag that opens it. Returns whether to render, the callback the sheet
 // calls when its close animation ends, and the element to refocus afterwards.
 export function useSheetMount(field) {
-    const open = useSystemStore((state) => state[field]);
+    const open = useSystemStore((state) => Boolean(state[field]));
     const [mounted, setMounted] = useState(open);
     const handleClosed = useCallback(() => setMounted(false), []);
     const returnFocus = useRef(null);
@@ -29,12 +29,14 @@ export function useSheetMount(field) {
 
 // Slides (or fades) a sheet and its backdrop in and takes focus; slides out when
 // `open` turns false, then restores focus and calls onClosed. Escape closes it
-// wherever focus is. While it closes the sheet root is `data-closing` (no taps).
-export function useSheetMotion({ open, close, sheetRef, backdropRef, focusRef, onClosed, returnFocus }) {
+// wherever focus is (but not while an IME composition is active). While it
+// closes the sheet root is `data-closing` (no taps). `slide: false` fades the
+// sheet instead of sliding it (the app switcher).
+export function useSheetMotion({ open, close, sheetRef, backdropRef, focusRef, onClosed, returnFocus, slide = true }) {
     useLayoutEffect(() => {
         const sheet = sheetRef.current;
         const backdrop = backdropRef.current;
-        const reduced = prefersReducedMotion();
+        const reduced = prefersReducedMotion() || !slide;
         gsap.killTweensOf([sheet, backdrop]);
 
         if (open) {
@@ -60,12 +62,12 @@ export function useSheetMotion({ open, close, sheetRef, backdropRef, focusRef, o
             },
         });
         return () => gsap.killTweensOf([sheet, backdrop]);
-    }, [open, onClosed, returnFocus, sheetRef, backdropRef, focusRef]);
+    }, [open, onClosed, returnFocus, sheetRef, backdropRef, focusRef, slide]);
 
     useEffect(() => {
         if (!open) return undefined;
         const handleKeyDown = (event) => {
-            if (event.key !== 'Escape') return;
+            if (event.key !== 'Escape' || event.isComposing) return;
             event.preventDefault();
             close();
         };

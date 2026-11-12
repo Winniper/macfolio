@@ -84,6 +84,8 @@ const useWindowStore = create(
 
         if (!window || !isVisible(window) || state.focusedId === key) return;
 
+        // Coming forward by focus is not an icon open: forget the old icon rect.
+        window.originRect = null;
         raise(state, key);
       }),
 

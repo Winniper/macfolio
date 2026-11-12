@@ -11,8 +11,10 @@ import AppScreen from './AppScreen';
 import { PHONE_APPS } from './apps';
 import HomeBar from './HomeBar';
 import HomeScreen from './HomeScreen';
+import PhoneBanner from './PhoneBanner';
 import PhoneControlCenter from './PhoneControlCenter';
 import PhoneSpotlight from './PhoneSpotlight';
+import PhoneSwitcher from './PhoneSwitcher';
 import RotateCard from './RotateCard';
 import StatusBar from './StatusBar';
 
@@ -118,16 +120,17 @@ const PhoneApp = ({ id, front, covered }) => {
 };
 
 // The phone UI: status bar, home screen, open apps and Home bar over the
-// wallpaper. Sheets and banners mount in here too (later tasks).
+// wallpaper. The sheets, the app switcher and the banner mount in here too.
 const PhoneShell = () => {
     const foreground = useWindowStore(foregroundApp);
     const open = useWindowStore(useShallow(recentApps));
     const spotlightOpen = useSystemStore((state) => state.spotlightOpen);
     const controlCenterOpen = useSystemStore((state) => state.controlCenterOpen);
+    const switcherOpen = useSystemStore((state) => Boolean(state.missionControl));
     const goHome = useSystemStore((state) => state.goHome);
     const openMissionControl = useSystemStore((state) => state.openMissionControl);
     // The page behind a sheet is inert while it is shown.
-    const sheetOpen = spotlightOpen || controlCenterOpen;
+    const sheetOpen = spotlightOpen || controlCenterOpen || switcherOpen;
     const rootRef = useRef(null);
     const closing = useRef(false);
 
@@ -148,6 +151,11 @@ const PhoneShell = () => {
     // that runs does nothing.
     const onHome = () => {
         if (closing.current) return;
+        // From the switcher the front app is behind the layer: nothing to shrink.
+        if (useSystemStore.getState().missionControl) {
+            goHome();
+            return;
+        }
         const id = useWindowStore.getState().focusedId;
         const section = foreground && rootRef.current.querySelector(`.phone-app[data-app="${id}"]`);
 
@@ -171,8 +179,10 @@ const PhoneShell = () => {
             {open.map((id) => <PhoneApp key={id} id={id} front={id === foreground} covered={sheetOpen} />)}
             <PhoneSpotlight />
             <PhoneControlCenter />
+            <PhoneSwitcher />
             <StatusBar />
             <HomeBar onHome={onHome} onSwitcher={openMissionControl} />
+            <PhoneBanner />
             <RotateCard />
         </div>
     );
