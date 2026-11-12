@@ -48,9 +48,16 @@ function App() {
   }, [fitToViewport])
 
   // Windows opened on the phone got bounds for a phone-sized viewport; give
-  // the desktop its default layout back when it takes over.
+  // the desktop its default layout back when it takes over. A phone sheet
+  // (Spotlight, Control Center, the switcher) must not come up with it.
   useEffect(() => {
-    if (wasPhoneRef.current && !phone) resetLayout()
+    if (wasPhoneRef.current && !phone) {
+      const system = useSystemStore.getState()
+      system.closeSpotlight()
+      system.closeControlCenter()
+      system.closeMissionControl()
+      resetLayout()
+    }
     wasPhoneRef.current = phone
   }, [phone, resetLayout])
 

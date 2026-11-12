@@ -130,6 +130,12 @@ html.phone-mode body {
   outline-offset: 2px;
 }
 
+/* The two text fields hide the input's own outline; their pill shows it. */
+#phone :is(.phone-safari-address, .phone-spotlight-field):focus-within {
+  outline: 2px solid var(--phone-blue);
+  outline-offset: 2px;
+}
+
 #phone .phone-home-bar:focus-visible {
   outline: none;
 }

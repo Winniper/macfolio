@@ -1,7 +1,7 @@
 // First-load boot sequence helpers. Every browser API here is wrapped so a
 // blocked or missing one degrades to "show the boot again", never a crash.
 
-// index.html repeats both values in its inline boot-shell script; keep them in sync.
+// index.html repeats this key in its inline boot-shell script; keep them in sync.
 export const BOOT_SEEN_KEY = 'portfolio:bootSeen';
 
 // Phone mode: narrow windows, and touch devices held sideways (short but wide).
