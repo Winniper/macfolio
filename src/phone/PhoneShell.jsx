@@ -132,6 +132,12 @@ const PhoneShell = () => {
         return () => root.classList.remove('phone-mode');
     }, []);
 
+    // A close tween killed by another app coming to the front never completes,
+    // so any change of front app also ends the "closing" state.
+    useEffect(() => {
+        closing.current = false;
+    }, [foreground]);
+
     // Home: the front app shrinks into its icon first. A second press while
     // that runs does nothing.
     const onHome = () => {

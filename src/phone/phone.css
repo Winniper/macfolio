@@ -493,6 +493,11 @@ html.phone-mode body {
   color: rgb(255 255 255 / 0.3);
 }
 
+#phone .phone-row-icon {
+  flex: none;
+  color: #0a84ff;
+}
+
 /* Buttons inside scrollable content must still let a finger pan. */
 #phone .phone-scroll button {
   touch-action: pan-y;
