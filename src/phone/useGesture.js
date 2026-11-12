@@ -64,6 +64,12 @@ export function useGesture(ref, handlers) {
 
         const onMove = (e) => {
             if (!track || e.pointerId !== track.id) return;
+            // A mouse hovering with no button down: the pointerup that should
+            // have ended this track went elsewhere, so the track is stale.
+            if (e.pointerType === 'mouse' && e.buttons === 0) {
+                finish();
+                return;
+            }
             if (!track.captured
                 && Math.hypot(e.clientX - track.startX, e.clientY - track.startY) > TAP_SLOP) {
                 track.captured = true;

@@ -10,8 +10,8 @@ import useSystemStore from '../store/system';
 import useWindowStore from '../store/window';
 import { useGesture } from './useGesture';
 
-// One app icon. It opens from its own rect, which the open animation grows from.
-const AppIcon = ({ app }) => {
+// One app icon (dock icons carry no visible label). It opens from its own rect, which the open animation grows from.
+const AppIcon = ({ app, showLabel = true }) => {
     const openWindow = useWindowStore((state) => state.openWindow);
     const iconRef = useRef(null);
 
@@ -20,10 +20,11 @@ const AppIcon = ({ app }) => {
             type="button"
             className="phone-app-icon"
             data-phone-app={app.id}
+            aria-label={showLabel ? undefined : app.name}
             onClick={() => openWindow(app.id, null, toRect(iconRef.current.getBoundingClientRect()))}
         >
             <img ref={iconRef} src={app.icon} alt="" draggable="false" />
-            <span>{app.name}</span>
+            {showLabel && <span>{app.name}</span>}
         </button>
     );
 };
@@ -83,7 +84,7 @@ const HomeScreen = ({ inert }) => {
             </button>
 
             <div className="phone-dock">
-                {phoneDockApps.map((app) => <AppIcon key={app.id} app={app} />)}
+                {phoneDockApps.map((app) => <AppIcon key={app.id} app={app} showLabel={false} />)}
             </div>
         </div>
     );

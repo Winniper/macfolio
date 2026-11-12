@@ -2,31 +2,16 @@ import React from 'react';
 import { Github, Linkedin, Mail } from 'lucide-react';
 import WindowWrapper from '../hoc/WindowWrapper';
 import WindowControls from '../components/WindowControl';
+import { contactIntro, contactLinks } from '../constants';
+
+const LINK_STYLES = {
+    github: { icon: Github, color: 'bg-[#ef5350]', hover: 'hover:bg-[#d32f2f]' }, // Red
+    linkedin: { icon: Linkedin, color: 'bg-[#0077b5]', hover: 'hover:bg-[#006097]' }, // LinkedIn Blue
+    gmail: { icon: Mail, color: 'bg-[#43a047]', hover: 'hover:bg-[#2e7d32]' }, // Green
+};
 
 const Contact = () => {
-    const links = [
-        {
-            name: 'Github',
-            icon: Github,
-            color: 'bg-[#ef5350]', // Red
-            hover: 'hover:bg-[#d32f2f]',
-            link: 'https://github.com/Winniper'
-        },
-        {
-            name: 'LinkedIn',
-            icon: Linkedin,
-            color: 'bg-[#0077b5]', // LinkedIn Blue
-            hover: 'hover:bg-[#006097]',
-            link: 'https://www.linkedin.com/in/debaditya-barman-b91748247/'
-        },
-        {
-            name: 'Gmail',
-            icon: Mail,
-            color: 'bg-[#43a047]', // Green
-            hover: 'hover:bg-[#2e7d32]',
-            link: 'mailto:debadityabarman12@gmail.com'
-        }
-    ];
+    const links = contactLinks.map((item) => ({ ...item, ...LINK_STYLES[item.id] }));
 
     return (
         <div className="flex flex-col rounded-xl overflow-hidden shadow-2xl bg-[#1e1e1e] flex-1 min-h-0 w-full">
@@ -50,9 +35,9 @@ const Contact = () => {
                         />
                     </div>
 
-                    <h1 className="text-2xl font-bold mb-2">Let's Connect</h1>
+                    <h1 className="text-2xl font-bold mb-2">{contactIntro.heading}</h1>
                     <p className="text-gray-400 text-sm max-w-md">
-                        Got an idea? A bug to squash? Or just wanna talk tech? I'm in.
+                        {contactIntro.body}
                     </p>
                 </div>
 
@@ -60,7 +45,7 @@ const Contact = () => {
                 <div className="grid grid-cols-3 gap-4 mt-auto">
                     {links.map((item) => (
                         <a
-                            key={item.name}
+                            key={item.id}
                             href={item.link}
                             target="_blank"
                             rel="noopener noreferrer"

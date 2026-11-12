@@ -194,8 +194,22 @@ const placeholderTracks = [
     { id: 'paper-planes', title: 'Paper Planes', artist: 'Studio Placeholder', album: 'Side Projects', cover: null, src: '/music/paper-planes.wav', duration: 18 },
 ];
 
+// Shared by the desktop Contact window and the phone Contact app.
+const contactLinks = [
+    { id: 'github', name: 'Github', link: 'https://github.com/Winniper' },
+    { id: 'linkedin', name: 'LinkedIn', link: 'https://www.linkedin.com/in/debaditya-barman-b91748247/' },
+    { id: 'gmail', name: 'Gmail', link: 'mailto:debadityabarman12@gmail.com' },
+];
+
+const contactIntro = {
+    heading: "Let's Connect",
+    body: "Got an idea? A bug to squash? Or just wanna talk tech? I'm in.",
+};
+
 export {
     profile,
+    contactLinks,
+    contactIntro,
     welcomeNotifications,
     placeholderTracks,
     navIcons,
