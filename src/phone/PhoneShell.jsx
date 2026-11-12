@@ -11,6 +11,7 @@ import AppScreen from './AppScreen';
 import { PHONE_APPS } from './apps';
 import HomeBar from './HomeBar';
 import HomeScreen from './HomeScreen';
+import PhoneControlCenter from './PhoneControlCenter';
 import PhoneSpotlight from './PhoneSpotlight';
 import RotateCard from './RotateCard';
 import StatusBar from './StatusBar';
@@ -122,8 +123,11 @@ const PhoneShell = () => {
     const foreground = useWindowStore(foregroundApp);
     const open = useWindowStore(useShallow(recentApps));
     const spotlightOpen = useSystemStore((state) => state.spotlightOpen);
+    const controlCenterOpen = useSystemStore((state) => state.controlCenterOpen);
     const goHome = useSystemStore((state) => state.goHome);
     const openMissionControl = useSystemStore((state) => state.openMissionControl);
+    // The page behind a sheet is inert while it is shown.
+    const sheetOpen = spotlightOpen || controlCenterOpen;
     const rootRef = useRef(null);
     const closing = useRef(false);
 
@@ -163,9 +167,10 @@ const PhoneShell = () => {
 
     return (
         <div id="phone" ref={rootRef}>
-            <HomeScreen inert={foreground !== null || spotlightOpen} />
-            {open.map((id) => <PhoneApp key={id} id={id} front={id === foreground} covered={spotlightOpen} />)}
+            <HomeScreen inert={foreground !== null || sheetOpen} />
+            {open.map((id) => <PhoneApp key={id} id={id} front={id === foreground} covered={sheetOpen} />)}
             <PhoneSpotlight />
+            <PhoneControlCenter />
             <StatusBar />
             <HomeBar onHome={onHome} onSwitcher={openMissionControl} />
             <RotateCard />

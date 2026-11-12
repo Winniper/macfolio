@@ -1,20 +1,16 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import gsap from 'gsap';
+import { useMemo, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
 
 import { phoneRegistry } from '../constants/apps';
 import useProjects from '../hooks/useProjects';
 import useSkills from '../hooks/useSkills';
-import { prefersReducedMotion } from '../lib/boot';
 import { swipeDirection } from '../lib/gestures';
 import { runMenuAction } from '../lib/menuActions';
 import { phoneSpotlightEntries } from '../lib/phone';
 import { buildSpotlightIndex, flattenResults, searchSpotlight } from '../lib/spotlight';
 import useSystemStore from '../store/system';
 import { useGesture } from './useGesture';
-
-const SLIDE_SECONDS = 0.3;
-const FADE_SECONDS = 0.15;
+import { useSheetMotion, useSheetMount } from './useSheet';
 
 // The sheet mounts only while it is shown, so every open starts with an empty query.
 const SpotlightSheet = ({ onClosed, returnFocus }) => {
@@ -42,37 +38,7 @@ const SpotlightSheet = ({ onClosed, returnFocus }) => {
     }, [index, query, hasQuery]);
     const results = flattenResults(groups);
 
-    // Slide (or fade) in, and take focus; slide out when the store closes it.
-    useLayoutEffect(() => {
-        const sheet = sheetRef.current;
-        const backdrop = backdropRef.current;
-        const reduced = prefersReducedMotion();
-        gsap.killTweensOf([sheet, backdrop]);
-
-        if (open) {
-            gsap.fromTo(backdrop, { opacity: 0 }, { opacity: 1, duration: FADE_SECONDS });
-            gsap.fromTo(
-                sheet,
-                reduced ? { opacity: 0 } : { yPercent: -100 },
-                { opacity: 1, yPercent: 0, duration: reduced ? FADE_SECONDS : SLIDE_SECONDS, ease: 'power3.out' },
-            );
-            inputRef.current?.focus({ preventScroll: true });
-            return undefined;
-        }
-
-        gsap.to(backdrop, { opacity: 0, duration: FADE_SECONDS });
-        gsap.to(sheet, {
-            ...(reduced ? { opacity: 0 } : { yPercent: -100 }),
-            duration: reduced ? FADE_SECONDS : SLIDE_SECONDS,
-            ease: 'power2.in',
-            onComplete: () => {
-                const target = returnFocus.current;
-                if (target?.isConnected && !target.closest('[inert]')) target.focus({ preventScroll: true });
-                onClosed();
-            },
-        });
-        return () => gsap.killTweensOf([sheet, backdrop]);
-    }, [open, onClosed, returnFocus]);
+    useSheetMotion({ open, close: closeSpotlight, sheetRef, backdropRef, focusRef: inputRef, onClosed, returnFocus });
 
     // A swipe up on the header closes the sheet; the results list scrolls on its own.
     useGesture(headerRef, {
@@ -90,17 +56,14 @@ const SpotlightSheet = ({ onClosed, returnFocus }) => {
         // Enter that confirms an IME composition is not a choice.
         if (event.nativeEvent.isComposing) return;
 
-        if (event.key === 'Escape') {
-            event.preventDefault();
-            closeSpotlight();
-        } else if (event.key === 'Enter' && event.target === inputRef.current) {
+        if (event.key === 'Enter' && event.target === inputRef.current) {
             event.preventDefault();
             if (results[0]) choose(results[0]);
         }
     };
 
     return (
-        <div className="phone-spotlight" onKeyDown={handleKeyDown}>
+        <div className="phone-spotlight" data-closing={!open} onKeyDown={handleKeyDown}>
             <button
                 ref={backdropRef}
                 type="button"
@@ -156,22 +119,10 @@ const SpotlightSheet = ({ onClosed, returnFocus }) => {
     );
 };
 
-// Keeps the sheet mounted through its closing animation.
 const PhoneSpotlight = () => {
-    const open = useSystemStore((state) => state.spotlightOpen);
-    const [mounted, setMounted] = useState(open);
-    const handleClosed = useCallback(() => setMounted(false), []);
-    const returnFocus = useRef(null);
+    const { render, onClosed, returnFocus } = useSheetMount('spotlightOpen');
 
-    // Noted when the store flips, before React renders: once the sheet is in, the
-    // page behind it is inert and has dropped focus.
-    useEffect(() => useSystemStore.subscribe((state, previous) => {
-        if (!state.spotlightOpen || previous.spotlightOpen) return;
-        returnFocus.current = document.activeElement;
-        setMounted(true);
-    }), []);
-
-    return open || mounted ? <SpotlightSheet onClosed={handleClosed} returnFocus={returnFocus} /> : null;
+    return render ? <SpotlightSheet onClosed={onClosed} returnFocus={returnFocus} /> : null;
 };
 
 export default PhoneSpotlight;

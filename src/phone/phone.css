@@ -1412,3 +1412,342 @@ body > .phone-rotate-card {
     backdrop-filter: none;
   }
 }
+
+/* A sheet that is closing takes no taps. */
+#phone .phone-spotlight[data-closing="true"],
+#phone .phone-cc[data-closing="true"] {
+  pointer-events: none;
+}
+
+/* ---- Control Center panel ---- */
+
+/* Same layer as Spotlight: under the status bar and Home bar, over the apps. */
+#phone .phone-cc {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+}
+
+#phone .phone-cc-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0.45);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+#phone .phone-cc-sheet {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100% - 20px);
+  padding-top: var(--phone-status-height);
+  background: rgba(28, 28, 30, 0.96);
+  border-radius: 0 0 28px 28px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  outline: 0;
+}
+
+#phone .phone-cc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 4px 20px;
+  touch-action: none;
+}
+
+#phone .phone-cc-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+#phone .phone-cc-done {
+  min-height: 44px;
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  color: var(--phone-blue);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+#phone .phone-cc-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  padding: 4px 16px 6px;
+}
+
+#phone .phone-cc-grabber {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  touch-action: none;
+}
+
+#phone .phone-cc-grabber span {
+  width: 36px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+#phone .phone-cc-module {
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(118, 118, 128, 0.24);
+}
+
+#phone .phone-cc-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+#phone .phone-cc-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#phone .phone-cc-column .phone-cc-module {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+#phone .phone-cc-radios {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#phone .phone-cc-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+
+#phone .phone-cc-toggle-icon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(118, 118, 128, 0.5);
+}
+
+#phone .phone-cc-toggle.is-active .phone-cc-toggle-icon {
+  background: var(--phone-blue);
+}
+
+#phone .phone-cc-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  text-align: left;
+}
+
+#phone .phone-cc-label {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#phone .phone-cc-detail {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#phone .phone-cc-title {
+  margin: 0 0 6px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+#phone .phone-cc-slider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#phone .phone-cc-slider input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  margin: 0;
+  background: transparent;
+  touch-action: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+#phone .phone-cc-slider input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #fff var(--fill, 0%), rgb(255 255 255 / 0.25) var(--fill, 0%));
+}
+
+#phone .phone-cc-slider input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 0.25);
+}
+
+#phone .phone-cc-slider input[type="range"]::-moz-range-progress {
+  height: 6px;
+  border-radius: 3px;
+  background: #fff;
+}
+
+#phone .phone-cc-slider input[type="range"]::-webkit-slider-thumb {
+  width: 22px;
+  height: 22px;
+  margin-top: -8px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  -webkit-appearance: none;
+}
+
+#phone .phone-cc-slider input[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+}
+
+#phone .phone-cc-slider input[type="range"]:focus-visible {
+  outline: 2px solid var(--phone-blue);
+  outline-offset: 2px;
+}
+
+#phone .phone-cc-now-playing {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#phone .phone-cc-song {
+  flex: 1;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  justify-content: center;
+}
+
+#phone .phone-cc-transport {
+  display: flex;
+  flex: none;
+}
+
+#phone .phone-cc-transport button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+#phone .phone-cc-transport button:disabled {
+  opacity: 0.35;
+}
+
+#phone .phone-cc-history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#phone .phone-cc-clear {
+  min-height: 32px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--phone-blue);
+  font-size: 15px;
+}
+
+#phone .phone-cc-history-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+}
+
+#phone .phone-cc-history-item img {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
+#phone .phone-cc-empty {
+  margin: 4px 0 2px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+}
+
+#phone .phone-cc-power {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+#phone .phone-cc-power button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  border: 0;
+  border-radius: 14px;
+  background: rgba(118, 118, 128, 0.32);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+#phone .phone-cc-power button:active {
+  background: rgba(118, 118, 128, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #phone .phone-cc-backdrop {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
