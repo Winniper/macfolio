@@ -93,7 +93,7 @@ const SpotlightSheet = ({ onClosed, returnFocus }) => {
         if (event.key === 'Escape') {
             event.preventDefault();
             closeSpotlight();
-        } else if (event.key === 'Enter') {
+        } else if (event.key === 'Enter' && event.target === inputRef.current) {
             event.preventDefault();
             if (results[0]) choose(results[0]);
         }
