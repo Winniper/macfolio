@@ -1,30 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { Download, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
-import { fetchCurrentResume } from '../lib/resumeApi';
+import useResume from '../hooks/useResume';
 import WindowWrapper from '../hoc/WindowWrapper';
 import WindowControls from '../components/WindowControl';
 
 const Resume = () => {
-    const [resume, setResume] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    const fetchResumeUrl = useCallback(async () => {
-        setError(null);
-        setLoading(true);
-        try {
-            setResume(await fetchCurrentResume());
-        } catch (err) {
-            console.error('Error fetching resume:', err);
-            setError('Unable to load resume');
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchResumeUrl();
-    }, [fetchResumeUrl]);
+    const { resume, loading, error, retry: fetchResumeUrl } = useResume();
 
     return (
         <div className="flex flex-col rounded-2xl overflow-hidden shadow-2xl flex-1 min-h-0 w-full">

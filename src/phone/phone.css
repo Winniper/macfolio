@@ -771,3 +771,29 @@ body > .phone-rotate-card {
     opacity: 0.8;
   }
 }
+
+#phone .phone-pdf {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#phone .phone-pdf-page {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+  background: #fff;
+}
+
+#phone .phone-toolbar-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  border-top: 1px solid rgb(255 255 255 / 0.12);
+  color: var(--phone-blue);
+  font-size: 17px;
+  text-decoration: none;
+}
