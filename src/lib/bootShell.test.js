@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { BOOT_SEEN_KEY, SMALL_SCREEN_QUERY } from './boot';
+import { BOOT_SEEN_KEY } from './boot';
 
 const html = readFileSync(fileURLToPath(new URL('../../index.html', import.meta.url)), 'utf8');
 
@@ -13,6 +13,6 @@ describe('boot shell in index.html', () => {
         const head = html.slice(0, html.indexOf('</head>'));
         expect(head).toContain("classList.add('booting')");
         expect(head).toContain(BOOT_SEEN_KEY);
-        expect(head).toContain(SMALL_SCREEN_QUERY);
+        expect(head).not.toContain('matchMedia');
     });
 });

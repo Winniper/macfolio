@@ -3,7 +3,11 @@
 
 // index.html repeats both values in its inline boot-shell script; keep them in sync.
 export const BOOT_SEEN_KEY = 'portfolio:bootSeen';
-export const SMALL_SCREEN_QUERY = '(max-width: 639px)';
+
+// Phone mode: narrow windows, and touch devices held sideways (short but wide).
+export const PHONE_QUERY = '(max-width: 639px), (pointer: coarse) and (max-height: 499px)';
+export const PHONE_LANDSCAPE_QUERY =
+    '(pointer: coarse) and (max-height: 499px) and (orientation: landscape)';
 
 export const readBootSeen = (storage = globalThis.sessionStorage) => {
     try {
@@ -29,11 +33,8 @@ export const matchesMedia = (query) => {
     }
 };
 
-// Tailwind's `sm` breakpoint is 640px; below it the site shows its
-// desktop-only notice instead.
-export const isSmallScreen = () => matchesMedia(SMALL_SCREEN_QUERY);
+export const isPhoneScreen = () => matchesMedia(PHONE_QUERY);
 
 export const prefersReducedMotion = () => matchesMedia('(prefers-reduced-motion: reduce)');
 
-export const initialBootPhase = ({ bootSeen, smallScreen }) =>
-    bootSeen || smallScreen ? 'desktop' : 'booting';
+export const initialBootPhase = ({ bootSeen }) => (bootSeen ? 'desktop' : 'booting');

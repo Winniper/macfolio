@@ -1,5 +1,12 @@
-import { describe, it, expect, afterEach } from 'vitest';
-import { initialBootPhase, markBootSeen, matchesMedia, readBootSeen } from './boot';
+import { describe, it, expect, afterEach, vi } from 'vitest';
+import {
+    PHONE_QUERY,
+    initialBootPhase,
+    isPhoneScreen,
+    markBootSeen,
+    matchesMedia,
+    readBootSeen,
+} from './boot';
 
 const memoryStorage = () => {
     const data = {};
@@ -53,15 +60,26 @@ describe('matchesMedia', () => {
 });
 
 describe('initialBootPhase', () => {
-    it('boots on a first visit on a large screen', () => {
-        expect(initialBootPhase({ bootSeen: false, smallScreen: false })).toBe('booting');
+    it('boots on a first visit', () => {
+        expect(initialBootPhase({ bootSeen: false })).toBe('booting');
     });
 
     it('skips to the desktop after the boot was seen in this tab', () => {
-        expect(initialBootPhase({ bootSeen: true, smallScreen: false })).toBe('desktop');
+        expect(initialBootPhase({ bootSeen: true })).toBe('desktop');
     });
 
-    it('never boots on small screens', () => {
-        expect(initialBootPhase({ bootSeen: false, smallScreen: true })).toBe('desktop');
+    it('boots on a first visit on any screen size', () => {
+        expect(initialBootPhase({ bootSeen: false })).toBe('booting');
+    });
+});
+
+describe('isPhoneScreen', () => {
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    it('reports phone mode from the phone media query', () => {
+        vi.stubGlobal('matchMedia', (query) => ({ matches: query === PHONE_QUERY }));
+        expect(isPhoneScreen()).toBe(true);
     });
 });

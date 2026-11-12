@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { getViewport } from '../lib/bounds';
-import { initialBootPhase, isSmallScreen, markBootSeen, readBootSeen } from '../lib/boot';
+import { initialBootPhase, markBootSeen, readBootSeen } from '../lib/boot';
 import { missionControlLayout } from '../lib/missionControl';
 import { HISTORY_LIMIT, addNotification, createNotification } from '../lib/notifications';
 import useWindowStore from './window';
@@ -10,7 +10,7 @@ import { adjacentTrackId, clampVolume, trackById } from '../lib/music';
 
 // OS-level state that isn't about a single window: boot phase, Mission Control, Spotlight, Control Center (brightness, Focus), notifications and their history, the sound-effects switch, music playback and the desktop Clean Up counter.
 export const createInitialSystemState = () => ({
-  bootPhase: initialBootPhase({ bootSeen: readBootSeen(), smallScreen: isSmallScreen() }),
+  bootPhase: initialBootPhase({ bootSeen: readBootSeen() }),
   missionControl: null,
   // The songs the player uses: the placeholders until the live library loads.
   library: placeholderTracks,

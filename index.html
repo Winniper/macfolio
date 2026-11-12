@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/macbook.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>DevBarman's portfolio</title>
     <script>
       // Paint black before first paint when the boot will play, so the
@@ -16,9 +16,7 @@
         try {
           bootSeen = sessionStorage.getItem('portfolio:bootSeen') === '1';
         } catch (error) {}
-        if (!bootSeen && !matchMedia('(max-width: 639px)').matches) {
-          document.documentElement.classList.add('booting');
-        }
+        if (!bootSeen) document.documentElement.classList.add('booting');
       })();
     </script>
   </head>
