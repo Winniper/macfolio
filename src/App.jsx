@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { Navbar, Welcome, Dock } from "@components"
 import DesktopItem from "@components/DesktopItem"
 import { Terminal, Resume, Finder, Contact, Browser, AboutThisMac, Music } from "@windows"
@@ -19,12 +19,22 @@ import useSystemStore from "@store/system"
 import DesktopContextMenu from "@components/system/DesktopContextMenu"
 import BootScreen from "@components/system/BootScreen"
 import LockScreen from "@components/system/LockScreen"
+import useMediaQuery from "./hooks/useMediaQuery"
+import useWelcomeNotifications from "./hooks/useWelcomeNotifications"
+import { PHONE_QUERY } from "./lib/boot"
+import PhoneShell from "./phone/PhoneShell"
+import PhoneLockScreen from "./phone/PhoneLockScreen"
 
 gsap.registerPlugin(Draggable)
 
 function App() {
   const fitToViewport = useWindowStore((state) => state.fitToViewport)
+  const resetLayout = useWindowStore((state) => state.resetLayout)
   const bootPhase = useSystemStore((state) => state.bootPhase)
+  const phone = useMediaQuery(PHONE_QUERY)
+  const wasPhoneRef = useRef(phone)
+
+  useWelcomeNotifications()
 
   // index.html paints the page black until the boot screen (or the desktop)
   // is on screen; that has happened by the time this first effect runs.
@@ -37,41 +47,58 @@ function App() {
     return () => window.removeEventListener("resize", fitToViewport)
   }, [fitToViewport])
 
+  // Windows opened on the phone got bounds for a phone-sized viewport; give
+  // the desktop its default layout back when it takes over.
+  useEffect(() => {
+    if (wasPhoneRef.current && !phone) resetLayout()
+    wasPhoneRef.current = phone
+  }, [phone, resetLayout])
+
+  const showLock = bootPhase === "booting" || bootPhase === "locked"
+
   return (
     <main>
-      <Navbar />
-      <Welcome />
+      {phone ? (
+        <PhoneShell />
+      ) : (
+        <>
+          <Navbar />
+          <Welcome />
 
-      {/* Desktop Icons */}
-      {desktopItems.map((item) => (
-        <DesktopItem
-          key={item.id}
-          item={item}
-          style={{ top: item.position.top, left: item.position.left }}
-        />
-      ))}
+          {/* Desktop Icons */}
+          {desktopItems.map((item) => (
+            <DesktopItem
+              key={item.id}
+              item={item}
+              style={{ top: item.position.top, left: item.position.left }}
+            />
+          ))}
 
-      {/* Windows */}
-      <Terminal />
-      <Resume />
-      <Finder />
-      <Contact />
-      <Browser />
-      <AboutThisMac />
-      <Music />
-      <Dock />
-      <MissionControl />
-      <AppSwitcher />
-      <Spotlight />
-      <Notifications />
+          {/* Windows */}
+          <Terminal />
+          <Resume />
+          <Finder />
+          <Contact />
+          <Browser />
+          <AboutThisMac />
+          <Music />
+          <Dock />
+          <MissionControl />
+          <AppSwitcher />
+          <Spotlight />
+          <Notifications />
+          <ControlCenter />
+          <DesktopContextMenu />
+        </>
+      )}
+
+      {/* Mounted in both shells: no visuals of their own, or full-screen layers. */}
       <SoundEffects />
       <AudioController />
-      <ControlCenter />
-      <DesktopContextMenu />
       <Analytics />
       <DisplayDimmer />
       {/* Lock screen sits under the boot layer so the boot fades into it. */}
-      {(bootPhase === "booting" || bootPhase === "locked") && <LockScreen />}
+      {showLock && (phone ? <PhoneLockScreen /> : <LockScreen />)}
       {bootPhase === "booting" && <BootScreen />}
     </main>
   )

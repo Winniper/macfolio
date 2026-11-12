@@ -65,7 +65,7 @@ const Welcome = () => {
     const entranceRef = useRef(null)
 
     // Letters stay hidden until the visitor arrives at the desktop, then rise
-    // in. A load that starts on the desktop (refresh, small screens) shows them
+    // in. A load that starts on the desktop (a same-tab refresh) shows them
     // as-is.
     useGSAP(() => {
         const entering = bootPhase === 'desktop' && previousPhaseRef.current !== 'desktop'
@@ -112,10 +112,6 @@ const Welcome = () => {
             </p>
             <div ref={subtitleRef}>
                 {rendertext("portfolio", "text-9xl italic font-georama")}
-            </div>
-
-            <div className='small-screen'>
-                <p>This Portfolio is designed only for desktops/tablet screens.</p>
             </div>
         </section>
     )

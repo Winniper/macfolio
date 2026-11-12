@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { getApp } from '../../constants/apps';
-import useWelcomeNotifications from '../../hooks/useWelcomeNotifications';
 import { runMenuAction } from '../../lib/menuActions';
 import { NOTIFICATION_LIFETIME } from '../../lib/notifications';
 import useSystemStore from '../../store/system';
@@ -71,8 +70,6 @@ const NotificationBanner = ({ notification }) => {
 // Stacked top-right, newest on top.
 const Notifications = () => {
     const notifications = useSystemStore((state) => state.notifications);
-
-    useWelcomeNotifications();
 
     return (
         <div className="notifications" aria-live="polite">
