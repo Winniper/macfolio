@@ -1,5 +1,6 @@
 import AboutApp from './AboutApp';
 import ContactApp from './ContactApp';
+import MusicApp from './MusicApp';
 import ProjectsApp from './ProjectsApp';
 import ResumeApp from './ResumeApp';
 import SkillsApp from './SkillsApp';
@@ -11,4 +12,5 @@ export const PHONE_APPS = {
     finder: ProjectsApp,
     terminal: SkillsApp,
     resume: ResumeApp,
+    music: MusicApp,
 };

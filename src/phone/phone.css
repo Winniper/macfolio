@@ -797,3 +797,235 @@ body > .phone-rotate-card {
   font-size: 17px;
   text-decoration: none;
 }
+
+/* ---- Music ---- */
+
+#phone .phone-music {
+  position: relative;
+  height: 100%;
+}
+
+#phone .phone-music-cover {
+  display: block;
+  flex: none;
+  overflow: hidden;
+  background: #2c2c2e;
+}
+
+#phone .phone-music-cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#phone .phone-music-cover-sm { width: 44px; height: 44px; border-radius: 6px; }
+#phone .phone-music-cover-xl {
+  width: min(100%, 320px, 42dvh);
+  aspect-ratio: 1;
+  border-radius: 12px;
+  box-shadow: 0 18px 40px rgb(0 0 0 / 0.5);
+}
+
+#phone .phone-music-row {
+  min-height: 60px;
+  padding: 8px 14px;
+}
+
+#phone .phone-music-row.is-current .phone-music-row-title {
+  color: var(--phone-blue);
+}
+
+#phone .phone-music-row-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+#phone .phone-music-row-title,
+#phone .phone-music-row-artist {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#phone .phone-music-row-artist {
+  color: rgb(255 255 255 / 0.55);
+  font-size: 14px;
+}
+
+#phone .phone-music-mini {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 10px 6px;
+  padding: 6px 10px 6px 6px;
+  border-radius: 14px;
+  background: #1c1c1e;
+}
+
+#phone .phone-music-mini button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  border: 0;
+  background: none;
+}
+
+#phone .phone-music-mini .phone-music-mini-open {
+  flex: 1;
+  justify-content: flex-start;
+  gap: 10px;
+  min-width: 0;
+  padding: 0;
+  text-align: left;
+}
+
+#phone .phone-music-mini-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+#phone .phone-music-sheet {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding:
+    var(--phone-status-height)
+    28px
+    calc(var(--phone-home-bar-height) + env(safe-area-inset-bottom) + 12px);
+  background: linear-gradient(180deg, #2a2a2e, #000 70%);
+  overflow: hidden;
+}
+
+#phone .phone-music-close {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  min-height: 44px;
+  border: 0;
+  background: none;
+  color: rgb(255 255 255 / 0.6);
+}
+
+#phone .phone-music-meta {
+  width: 100%;
+  min-width: 0;
+}
+
+#phone .phone-music-title {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+#phone .phone-music-artist {
+  margin: 2px 0 0;
+  color: rgb(255 255 255 / 0.6);
+  font-size: 18px;
+}
+
+#phone .phone-music-scrubber,
+#phone .phone-music-volume {
+  width: 100%;
+}
+
+#phone .phone-music-times {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  color: rgb(255 255 255 / 0.55);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+#phone .phone-music-volume {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgb(255 255 255 / 0.6);
+}
+
+#phone .phone-music-transport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 36px;
+}
+
+#phone .phone-music-transport button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  min-height: 64px;
+  border: 0;
+  background: none;
+  color: #fff;
+}
+
+#phone .phone-music-sheet input[type="range"] {
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  background: transparent;
+  touch-action: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+#phone .phone-music-sheet input[type="range"]::-webkit-slider-runnable-track {
+  height: 5px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #fff var(--fill, 0%), rgb(255 255 255 / 0.25) var(--fill, 0%));
+}
+
+#phone .phone-music-sheet input[type="range"]::-moz-range-track {
+  height: 5px;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 0.25);
+}
+
+#phone .phone-music-sheet input[type="range"]::-moz-range-progress {
+  height: 5px;
+  border-radius: 3px;
+  background: #fff;
+}
+
+#phone .phone-music-sheet input[type="range"]::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+  margin-top: -5.5px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  -webkit-appearance: none;
+}
+
+#phone .phone-music-sheet input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+}
+
+#phone .phone-music-sheet input[type="range"]:focus-visible {
+  outline: 2px solid var(--phone-blue);
+  outline-offset: 2px;
+}
